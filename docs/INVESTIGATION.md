@@ -198,6 +198,35 @@ SwiftUI → SwiftUICore → CoreTransferable
 That chain is the same wall this project hit from the other direction: the
 bottom of every framework is CoreFoundation and the ObjC runtime.
 
+## Phase G — the IDE's dependency mass
+
+644 framework binaries, **2.41 GB** of code, plus 46 XPC services and 73
+plug-in bundles. The ten largest:
+
+| framework | size |
+|---|---|
+| LLDB | 191.7 MB |
+| sourcekitdInProc | 172.6 MB |
+| CoreRealityIO | 96.2 MB |
+| CoreRE | 88.9 MB |
+| ModelIO | 48.9 MB |
+| RealityFoundation | 44.7 MB |
+| VFX | 38.7 MB |
+| IDEKit | 37.5 MB |
+| IDEIntelligenceChat | 37.3 MB |
+| IDEFoundation | 30.8 MB |
+
+The two biggest binaries in Xcode are **not the IDE**: they are the debugger
+engine and an in-process sourcekit. That is the shape of the dependency
+problem — a hypothetical "Xcode on Linux" would need LLDB's macOS backend
+(`mach` exceptions, `ptrace`, `vm_read`) and sourcekitd (Swift, with the
+compiler embedded) before it drew a single window.
+
+The 46 XPC services name the rest of the architecture: `SourceKitService`,
+`GPUToolsAgentService`, `XCUIRecorderService`, `MLRecipeExecutionService`,
+`RootDebuggingXPCService`, `AssetLoader` — each a separate process reached over
+mach ports.
+
 ## Where it stands
 
 ```

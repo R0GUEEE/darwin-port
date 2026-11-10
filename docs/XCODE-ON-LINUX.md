@@ -68,8 +68,12 @@ Measured from the XIP's own file table (every entry, not a sample):
 | `Contents/Resources` | 17 | 519 MB |
 | `Contents/MacOS/Xcode` (the launcher) | 1 | **80,592 B** |
 
-* **559 distinct frameworks** across `Frameworks/` and `SharedFrameworks/`.
-* **46 XPC services.**
+* **559 distinct frameworks** across `Frameworks/` and `SharedFrameworks/` —
+  644 framework binaries totalling **2.41 GB**. The two largest are not the
+  IDE: `LLDB` (191.7 MB) and `sourcekitdInProc` (172.6 MB).
+* **46 XPC services** — `SourceKitService`, `GPUToolsAgentService`,
+  `XCUIRecorderService`, `RootDebuggingXPCService`, …
+* **73 plug-in bundles** under `Contents/PlugIns/`.
 * The 80 KB `Xcode` binary is not the IDE — it is a launcher that loads
   `DVTFoundation`, `IDEKit`, `IDEFoundation` and the plug-in bundles.
 
