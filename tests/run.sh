@@ -16,6 +16,7 @@ else
     PORT="$ROOT/ports/darwin-port"
 fi
 BIN="$PORT/bin/darwinld"
+XCLANG="$ROOT/xclang"; [ -x "$XCLANG" ] || XCLANG="$PORT/xclang"
 SDK_MINI="$HERE/fixtures/mini-sdk"
 OUT="${TMPDIR:-/tmp}/xcode-re-tests"
 mkdir -p "$OUT"
