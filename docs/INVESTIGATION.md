@@ -99,6 +99,66 @@ Four defects were silent corruption rather than errors:
 
 All four are fixed and covered by tests T5/T7/T8 plus the weak-bind check.
 
+## Phase F — the SDK's API surface, without a single binary
+
+The SDK ships its entire API as text (`.tbd`). Parsing all of them gives the
+shape of macOS's interface without disassembling anything (`sdk_api.py`):
+
+```
+882 stub libraries (after de-duplicating symlinked framework stubs)
+  590,795 C symbols
+   24,183 Objective-C classes
+   10,976 Objective-C ivars
+      226 reexport edges between stubs
+```
+
+| stub | C symbols | ObjC classes |
+|---|---|---|
+| `SwiftUICore` | 74,465 | 8 |
+| `RealityFoundation` | 41,273 | — |
+| `FinanceKit` | 32,179 | — |
+| `SwiftUI` | 21,396 | 2 |
+| `AppKit` | 9,530 | 847 |
+| `PassKit` | 3,839 | 1,828 |
+| `Matter` | 0 | 1,518 |
+
+Two observations that matter for any port:
+
+1. **Swift-heavy frameworks carry the symbol mass.** `SwiftUICore` alone
+   describes 74k symbols, almost all Swift-mangled, and almost no ObjC classes.
+   The API surface of modern macOS is majority-Swift — which is why the Swift
+   runtime question ([SWIFT](SWIFT.md)) is not a side quest.
+2. **ObjC class counts are concentrated in old frameworks** — PassKit (1,828),
+   Matter (1,518), Intents (1,326), AddressBook (946), AppKit (847). Those are
+   the ones an ObjC runtime shim would have to carry.
+
+The reexport graph is shallow and predictable:
+
+```
+AppKit  → ApplicationServices → CoreServices → CoreFoundation → libobjc
+SwiftUI → SwiftUICore → CoreTransferable
+Metal   → (leaf)
+```
+
+Every framework eventually lands on `libobjc` and `libSystem`, which is exactly
+the boundary measured in [COMPATIBILITY](COMPATIBILITY.md): the substrate is
+small and named; the mass is in Swift and in the ObjC class-heavy frameworks.
+
+Raw data: `reports/sdk-api.json` (882 stubs, 226 edges).
+
+## Provenance, verified rather than assumed
+
+`verify_xip.py` closes the chain cryptographically — Apple signs the TOC, the
+TOC names `sha1(Content)`, the measured content hash matches:
+
+```
+TOC sha1        MATCH   (4868197f…c81c)
+RSA(TOC)        VERIFIED with the leaf key
+  cert0 ← cert1 ← cert2   (Software Update ← Apple Software Update CA ← Apple Root CA)
+sha1(Content)   MATCH
+VERDICT: authentic — signed by Apple and internally consistent
+```
+
 ## Where it stands
 
 ```

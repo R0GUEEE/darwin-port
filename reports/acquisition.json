@@ -23,7 +23,16 @@
    "xar_signature": "RSA, Apple Software Update Certification Authority, present in TOC heap",
    "content_sha1_expected": "53a622bf007cdb198d87f3552cecd7aca30b5a80",
    "content_sha1_measured": "53a622bf007cdb198d87f3552cecd7aca30b5a80",
-   "result": "authentic (member checksum matches the archive TOC)"
+   "result": "authentic (member checksum matches the archive TOC)",
+   "toc_sha1": "4868197f6002e4fd8496dd23abdccb255e32c81c",
+   "signature": "RSA-2048 over the compressed TOC, 256 bytes, verified with the leaf key",
+   "chain": [
+    "CN=Software Update, O=Apple Inc., C=US",
+    "CN=Apple Software Update Certification Authority, OU=Certification Authority, O=Apple Inc., C=US",
+    "C=US, O=Apple Inc., OU=Apple Certification Authority, CN=Apple Root CA"
+   ],
+   "chain_verified": "leaf signed by intermediate, intermediate signed by Apple Root CA, root self-signed",
+   "tool": "verify_xip.py"
   },
   "dmg": {
    "koly_crc32_expected": "0x9e458a9e",

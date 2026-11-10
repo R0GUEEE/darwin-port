@@ -32,7 +32,7 @@ $ python3 pxcodebuild.py build Demo.xcodeproj --sdk $SDK
 
 | | |
 |---|---|
-| XIP integrity | **authentic** — `sha1(Content)` equals Apple's recorded checksum |
+| XIP integrity | **authentic** — RSA signature over the TOC verifies, chain to Apple Root CA, `sha1(Content)` matches |
 | CLT DMG | **damaged** — CRC mismatch, 4 payloads holed, 95 % zeros |
 | Mach-O images parsed | 138 (155 arm64 slices, 25 x86_64, 2 arm64_32) |
 | toolchain executables that bind fully | **40 of 76** |

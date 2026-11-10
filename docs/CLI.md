@@ -103,6 +103,44 @@ darwinld run build/Demo.app/Contents/MacOS/Demo
 
 ---
 
+## `verify_xip.py` — prove an `.xip` is Apple's
+
+```
+verify_xip.py <file.xip>
+```
+
+Checks, in order: TOC SHA-1 · RSA signature over the TOC with the embedded leaf
+certificate · the chain leaf→intermediate→Apple Root CA · and the archive's own
+`sha1(Content)` against the TOC. Prints a verdict; exit 0 only if all pass.
+
+```
+TOC sha1        MATCH (4868197f…c81c)
+RSA(TOC)        VERIFIED   cert0 ← cert1 ← cert2 (Apple Root CA)
+sha1(Content)   MATCH
+VERDICT: authentic — signed by Apple and internally consistent
+```
+
+Needs `openssl` for the signature steps; the hashes are stdlib-only. 14 s for a
+2 GB XIP.
+
+---
+
+## `sdk_api.py` — inventory an SDK's API surface
+
+```
+sdk_api.py <SDK-dir> [-o out.json] [--top N]
+```
+
+Parses every `.tbd`, counting C symbols, ObjC classes/ivars, weak symbols and
+reexported libraries, de-duplicating symlinked framework stubs, and building the
+reexport graph. No binaries involved.
+
+```
+882 stub libraries · 590,795 C symbols · 24,183 ObjC classes · 226 reexport edges
+```
+
+---
+
 ## `xipx.py` — expand an `.xip`
 
 ```
