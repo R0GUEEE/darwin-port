@@ -5,7 +5,7 @@ Reads the SDK's `libswiftCore.tbd` (the runtime's exported ABI) and every
 Mach-O image you point it at, classifies each imported symbol (swift / objc /
 corefoundation / c++ / libc), and reports coverage.
 
-  swift_abi.py <libswiftCore.tbd> <tree-or-image> [...] [--json out.json]
+  swift_abi.py <stub.tbd[,stub2.tbd,...]> <tree-or-image> [...] [--json out.json]
 
 Selection uses chained fixups (LC_DYLD_CHAINED_FIXUPS), which every Swift
 toolchain binary here uses; images with only LC_DYLD_INFO are reported as
@@ -104,7 +104,9 @@ def walk(path, out):
 def main():
     if len(sys.argv) < 3:
         raise SystemExit(__doc__)
-    exports = tbd_exports(sys.argv[1])
+    exports = set()
+    for one in sys.argv[1].split(','):
+        exports |= tbd_exports(one)
     out = []
     for p in sys.argv[2:]:
         if p.startswith('--'):

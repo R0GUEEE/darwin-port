@@ -6,5 +6,8 @@ current-version: 1311.100.3
 compatibility-version: 1
 exports:
   - targets: [ arm64-macos ]
-    symbols: [ _printf, _puts, _write, _snprintf, _sprintf, _statfs, _setjmp, _longjmp, _opendir, _readdir, _closedir, _malloc, _free, _exit, _strlen, _getopt, _optind, _optarg, _strcmp, _abort, ___stack_chk_fail, dyld_stub_binder, _memset, _memcpy ]
+    symbols: [ _printf, _puts, _write, _snprintf, _sprintf, _malloc, _free, _exit,
+               _strlen, _strcmp, _abort, ___stack_chk_fail, dyld_stub_binder, _memset,
+               _memcpy, _getopt, _optind, _optarg, _opendir, _readdir, _closedir,
+               _statfs, _setjmp, _longjmp, _dyld_register_func_for_add_image ]
 ...

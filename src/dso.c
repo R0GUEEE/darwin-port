@@ -108,6 +108,7 @@ static struct dso *load(const char *path, int depth)
     }
     snprintf(d->path, sizeof d->path, "%s", path);
     g_ndso++;
+    shim_notify_image_added(&d->im);   /* dyld: new image → registered callbacks */
 
     /* install name: LC_ID_DYLIB appears as the first recorded dylib for a
      * dylib image; the loader stores it explicitly in im->install_name. */

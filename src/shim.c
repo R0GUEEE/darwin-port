@@ -21,6 +21,7 @@
 #include <dlfcn.h>
 #include "plat.h"
 #include "shim.h"
+#include "macho.h"
 
 /* assembly front ends (fmt_asm.S) - they capture sp for Darwin varargs */
 int ds_printf_stub(void), ds_fprintf_stub(void), ds_sprintf_stub(void);
@@ -953,6 +954,36 @@ static int ds_fstatfs(int fd, struct ds_statfs *out)
     return 0;
 }
 
+
+/* ---- dyld image-notification callbacks -------------------------------
+ * This is how the Swift runtime learns about images: it registers a callback
+ * and walks each image's __swift5_* sections to register type metadata,
+ * protocol conformances and field descriptors.  dyld invokes the callback for
+ * images already loaded at registration time, then for each new image. */
+static void (*g_add_image_cb)(const void *mh, intptr_t slide);
+static void (*g_remove_image_cb)(const void *mh, intptr_t slide);
+
+static void ds_dyld_register_func_for_add_image(void (*cb)(const void *, intptr_t))
+{
+    g_add_image_cb = cb;
+    if (!cb) return;
+    for (int i = 0; i < dso_count(); i++) {
+        image_t *im = dso_image_at(i);
+        if (!im) continue;
+        cb((const void *)(uintptr_t)(im->vmtext + im->slide), (intptr_t)im->slide);
+    }
+}
+static void ds_dyld_register_func_for_remove_image(void (*cb)(const void *, intptr_t))
+{
+    g_remove_image_cb = cb;
+}
+void shim_notify_image_added(void *p)
+{
+    image_t *im = (image_t *)p;
+    if (g_add_image_cb)
+        g_add_image_cb((const void *)(uintptr_t)(im->vmtext + im->slide), (intptr_t)im->slide);
+}
+
 /* ---- table ---- */
 /* Darwin exports these as *variables* holding the FILE*, not as functions:
  *   FILE *__stdoutp;   guest code does  ldr x0,[x0]
@@ -1081,11 +1112,11 @@ static const ent_t table[] = {
     { "vm_deallocate", (void *)ds_vm_deallocate },
     { "vm_allocate", (void *)ds_vm_allocate },
     { "sysctl", (void *)ds_sysctl },
-    { "_dyld_image_count", (void *)ds_dyld_image_count },
-    { "_dyld_get_image_name", (void *)ds_dyld_get_image_name },
-    { "_dyld_get_shared_cache_range", (void *)ds_dyld_get_shared_cache_range },
-    { "_dyld_for_each_installed_shared_cache", (void *)ds_dyld_for_each_installed_shared_cache },
-    { "_dyld_shared_cache_for_each_file", (void *)ds_dyld_shared_cache_for_each_file },
+    { "dyld_image_count", (void *)ds_dyld_image_count },
+    { "dyld_get_image_name", (void *)ds_dyld_get_image_name },
+    { "dyld_get_shared_cache_range", (void *)ds_dyld_get_shared_cache_range },
+    { "dyld_for_each_installed_shared_cache", (void *)ds_dyld_for_each_installed_shared_cache },
+    { "dyld_shared_cache_for_each_file", (void *)ds_dyld_shared_cache_for_each_file },
     { "dirname_r", (void *)ds_dirname_r },
     { "mkpath_np", (void *)ds_mkpath_np },
     { "_simple_getenv", (void *)ds_simple_getenv },
@@ -1096,8 +1127,10 @@ static const ent_t table[] = {
     { "ccdigest_init", (void *)ds_ccdigest_init },
     { "ccdigest_update", (void *)ds_ccdigest_update },
     { "ccsha256_di", (void *)ds_ccsha256_di },
-    { "_dyld_get_image_header", (void *)ds_dyld_get_image_header },
-    { "_dyld_get_image_vmaddr_slide", (void *)ds_dyld_get_image_vmaddr_slide },
+    { "dyld_register_func_for_add_image", (void *)ds_dyld_register_func_for_add_image },
+    { "dyld_register_func_for_remove_image", (void *)ds_dyld_register_func_for_remove_image },
+    { "dyld_get_image_header", (void *)ds_dyld_get_image_header },
+    { "dyld_get_image_vmaddr_slide", (void *)ds_dyld_get_image_vmaddr_slide },
     { "mach_thread_self", (void *)ds_mach_thread_self },
     { "_tlv_bootstrap", (void *)ds_tlv_bootstrap },
     { "xcselect_get_developer_dir_path", (void *)ds_xcselect_get_developer_dir_path },

@@ -102,7 +102,16 @@ case "$got" in
   *) bad "statfs" "got '$got'" ;;
 esac
 
-echo "== T9: build an Xcode project without Xcode =="
+echo "== T9: dyld image-registration callback (how the Swift runtime learns of images) =="
+DARWIN_SDK="$SDK_MINI" DARWIN_MINOS=14.0 "$PORT/xclang" -O1 -fno-stack-protector \
+    -o "$OUT/dyldreg" "$HERE/fixtures/dyldreg.c" 2>/dev/null
+got=$("$BIN" run "$OUT/dyldreg" 2>/dev/null)
+case "$got" in
+  callbacks=1|callbacks=[2-9]*) ok "register_func_for_add_image fires for loaded images" ;;
+  *) bad "dyld registration" "got '$got'" ;;
+esac
+
+echo "== T10: build an Xcode project without Xcode =="
 PB="$ROOT/pxcodebuild.py"; [ -f "$PB" ] || PB="$ROOT/../darwin-port/pxcodebuild.py"
 if [ -f "$PB" ] && [ -d "${DARWIN_SDK:-/root/xc/Xcode-beta.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk}" ]; then
     SDK_REAL="${DARWIN_SDK:-/root/xc/Xcode-beta.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk}"
@@ -116,7 +125,7 @@ else
     skip_ "pxcodebuild" "needs the real macOS SDK"
 fi
 
-echo "== T10: real Apple toolchain (optional) =="
+echo "== T11: real Apple toolchain (optional) =="
 APPLE_BIN="${APPLE_BIN:-/root/xc/Xcode-beta.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin}"
 if [ -x "$APPLE_BIN/ar" ]; then
     printf 'x\n' > "$OUT/member.txt"

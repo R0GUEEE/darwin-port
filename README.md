@@ -48,7 +48,7 @@ $ python3 pxcodebuild.py build Demo.xcodeproj --sdk $SDK
 src/        loader: macho (parse+fixups+trie), dso (images), shim (ABI), fmt (varargs)
 bin/        darwinld (built), xclang
 *.py        xipx (xip) · dmgx (dmg) · xarx + pkgx (pkg) · inventory · hdrmerge
-            pxcodebuild (build .xcodeproj on Linux) · swift_abi (Swift runtime ABI coverage)
+            pxcodebuild (build .xcodeproj on Linux) · swift_abi (Swift ABI coverage)
 docs/       17 documents — start at docs/INDEX.md
 reports/    acquisition, dependency graph, 167,522-entry inventory (gzipped)
 specs/      behavioural contracts for the loader and the containers
@@ -74,6 +74,7 @@ make test       # → passed 12, failed 0
 | [CLI](docs/CLI.md) | every tool and environment variable |
 | [FORMATS](docs/FORMATS.md) | xip, xar, pbzx, cpio-odc, dmg/UDIF |
 | [XCODE-ON-LINUX](docs/XCODE-ON-LINUX.md) | the IDE verdict, the project builder, the roadmap |
+| [SWIFT](docs/SWIFT.md) | Swift for iOS → Linux: ABI vs runtime, with measurements |
 | [COMPATIBILITY](docs/COMPATIBILITY.md) | what runs, where, and how it was measured |
 | [COMPAT](docs/COMPAT.md) | one line per translated call + its proving test |
 | [DEVIATIONS](docs/DEVIATIONS.md) | every deliberate difference from macOS |

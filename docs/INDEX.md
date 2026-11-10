@@ -12,6 +12,9 @@ Two trees exist and they are not duplicates:
 
 ## Read it by role
 
+**I want to know what happens to Swift**
+→ [SWIFT](SWIFT.md) → `specs/swift-runtime.md`
+
 **I want to build an Xcode project on Linux**
 → [XCODE-ON-LINUX](XCODE-ON-LINUX.md) → [CLI §pxcodebuild](CLI.md#pxcodebuildpy--build-an-xcodeproj)
 
@@ -50,6 +53,7 @@ Two trees exist and they are not duplicates:
 | [REPRODUCING](REPRODUCING.md) | the end-to-end recipe, with timings and sizes |
 | [INVESTIGATION](INVESTIGATION.md) | the reverse-engineering narrative and measurements |
 | [XCODE-ON-LINUX](XCODE-ON-LINUX.md) | what "port Xcode" means: IDE verdict, the project builder, the roadmap |
+| [SWIFT](SWIFT.md) | what Swift-for-iOS means off Apple: ABI vs runtime, measured |
 | [GLOSSARY](GLOSSARY.md) | xar, pbzx, odc, chained fixups, TLV, … |
 | [REPORT](REPORT.md) | appendix: first-pass findings, tool-by-tool results |
 | [DEEP-DIVE](DEEP-DIVE.md) | appendix: multi-image loading and the coverage census |

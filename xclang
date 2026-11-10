@@ -1,0 +1,30 @@
+#!/bin/sh
+# xclang - build Darwin (macOS) binaries on a Linux or Windows host using the
+# SDK extracted from Xcode.  No Xcode, no macOS, no osxcross runtime.
+#
+#   DARWIN_SDK     path to MacOSX.sdk            (default /opt/xcode/MacOSX.sdk)
+#   DARWIN_TARGET  clang target triple           (default arm64-apple-macos15.0)
+#   DARWIN_MINOS   minimum macOS version         (default 15.0)
+#   HOST_CLANG     compiler to drive             (default clang)
+#
+# Everything Apple-specific comes from the SDK: headers, framework stubs and
+# the .tbd text stubs that stand in for the dylibs.  The linker is LLD, the
+# only free Mach-O linker.
+set -eu
+SDK=${DARWIN_SDK:-/opt/xcode/MacOSX.sdk}
+TRIPLE=${DARWIN_TARGET:-arm64-apple-macos15.0}
+CC=${HOST_CLANG:-clang}
+MINOS=${DARWIN_MINOS:-15.0}
+
+[ -d "$SDK" ] || { echo "xclang: no SDK at $SDK" >&2; exit 1; }
+
+exec "$CC" \
+    -target "$TRIPLE" \
+    -isysroot "$SDK" \
+    -iframework "$SDK/System/Library/Frameworks" \
+    -F "$SDK/System/Library/Frameworks" \
+    -L "$SDK/usr/lib" \
+    -Wl,-platform_version,macos,"$MINOS",$MINOS \
+    -fuse-ld=lld \
+    -Wno-unused-command-line-argument \
+    "$@"
