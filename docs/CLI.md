@@ -71,6 +71,23 @@ Exit codes are clang's.
 
 ---
 
+## `sdk_api.py` — inventory an SDK's API surface
+
+```
+sdk_api.py <SDK dir> [-o out.json] [--top N]
+```
+
+Counts per `.tbd` stub: C symbols, Objective-C classes and ivars, weak symbols,
+reexported libraries, target triples, Swift ABI version. Builds the reexport
+graph. Symlinked stubs are deduplicated by realpath.
+
+```sh
+sdk_api.py MacOSX.sdk -o sdk-api.json
+# 882 stub libraries · 590,795 C symbols · 24,183 ObjC classes · 226 reexport edges
+```
+
+---
+
 ## `pxcodebuild.py` — build an Xcode project
 
 ```

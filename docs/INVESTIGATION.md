@@ -159,6 +159,45 @@ sha1(Content)   MATCH
 VERDICT: authentic — signed by Apple and internally consistent
 ```
 
+## Phase F — the SDK's API surface, as text
+
+Every framework in the SDK is described by a `.tbd` stub — a YAML-ish document
+listing exports, Objective-C classes, reexports and target triples. It is the
+whole public API of macOS in about 1,400 small files, and it is why this project
+can cross-compile without a single Apple binary.
+
+`sdk_api.py` over `MacOSX.sdk`:
+
+```
+882 unique stub libraries        (1,393 files; the rest are symlinks)
+590,795 C symbols
+ 24,183 Objective-C classes
+ 10,976 Objective-C ivars
+    226 reexport edges
+```
+
+| framework | C symbols | ObjC classes |
+|---|---|---|
+| SwiftUICore | 74,465 | 8 |
+| SwiftUI | 21,396 | 2 |
+| AppKit | 9,530 | 847 |
+| PassKit | 3,839 | 1,828 |
+| Matter | 0 | 1,518 |
+
+The symbol/class ratio is itself a finding: SwiftUICore is the largest API in
+the SDK by symbol count and has almost no Objective-C — it is Swift. PassKit is
+the opposite: a modest C surface over 1,828 Objective-C classes.
+
+Reexports give the API-level dependency chain without reading a binary:
+
+```
+AppKit → ApplicationServices → CoreServices → CoreFoundation → libobjc
+SwiftUI → SwiftUICore → CoreTransferable
+```
+
+That chain is the same wall this project hit from the other direction: the
+bottom of every framework is CoreFoundation and the ObjC runtime.
+
 ## Where it stands
 
 ```
