@@ -1,0 +1,7 @@
+bin/
+build/
+obj/
+*.o
+*.pyc
+__pycache__/
+tests/**/build/

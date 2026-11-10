@@ -1,0 +1,64 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {};
+	objectVersion = 56;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		AA0000000000000000000001 /* main.c in Sources */ = {isa = PBXBuildFile; fileRef = BB0000000000000000000001 /* main.c */; };
+		AA0000000000000000000002 /* notes.txt in Resources */ = {isa = PBXBuildFile; fileRef = BB0000000000000000000002 /* notes.txt */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXFileReference section */
+		BB0000000000000000000001 /* main.c */ = {isa = PBXFileReference; path = src/main.c; sourceTree = "<group>"; };
+		BB0000000000000000000002 /* notes.txt */ = {isa = PBXFileReference; path = src/notes.txt; sourceTree = "<group>"; };
+		BB0000000000000000000003 /* Demo.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; path = Demo.app; sourceTree = BUILT_PRODUCTS_DIR; };
+/* End PBXFileReference section */
+
+/* Begin PBXGroup section */
+		CC0000000000000000000001 = {isa = PBXGroup; children = (DD0000000000000000000001, BB0000000000000000000003); sourceTree = "<group>"; };
+		DD0000000000000000000001 /* src */ = {isa = PBXGroup; children = (BB0000000000000000000001, BB0000000000000000000002); path = src; sourceTree = "<group>"; };
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		EE0000000000000000000001 /* Demo */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = FF0000000000000000000002;
+			buildPhases = (110000000000000000000001, 110000000000000000000002, 110000000000000000000003);
+			name = Demo;
+			productName = Demo;
+			productReference = BB0000000000000000000003;
+			productType = "com.apple.product-type.application";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		FF0000000000000000000001 = {
+			isa = PBXProject;
+			buildConfigurationList = FF0000000000000000000003;
+			compatibilityVersion = "Xcode 14.0";
+			mainGroup = CC0000000000000000000001;
+			productRefGroup = CC0000000000000000000001;
+			targets = (EE0000000000000000000001);
+		};
+/* End PBXProject section */
+
+/* Begin PBXSourcesBuildPhase section */
+		110000000000000000000001 = {isa = PBXSourcesBuildPhase; files = (AA0000000000000000000001); };
+		110000000000000000000002 = {isa = PBXFrameworksBuildPhase; files = (); };
+		110000000000000000000003 = {isa = PBXResourcesBuildPhase; files = (AA0000000000000000000002); };
+/* End PBXSourcesBuildPhase section */
+
+/* Begin XCBuildConfiguration section */
+		FF0000000000000000000010 = {isa = XCBuildConfiguration; buildSettings = {SDKROOT = macosx; MACOSX_DEPLOYMENT_TARGET = 15.0;}; name = Debug; };
+		FF0000000000000000000011 = {isa = XCBuildConfiguration; buildSettings = {PRODUCT_NAME = Demo; PRODUCT_BUNDLE_IDENTIFIER = com.example.demo;}; name = Debug; };
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		FF0000000000000000000002 = {isa = XCConfigurationList; buildConfigurations = (FF0000000000000000000011); };
+		FF0000000000000000000003 = {isa = XCConfigurationList; buildConfigurations = (FF0000000000000000000010); };
+/* End XCConfigurationList section */
+	};
+	rootObject = FF0000000000000000000001;
+}

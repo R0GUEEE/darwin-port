@@ -1,0 +1,42 @@
+{
+ "generated": "2026-11-10T12:15:08",
+ "host": {
+  "os": "Alpine Linux (iSH), aarch64",
+  "note": "no macOS host available"
+ },
+ "inputs": [
+  {
+   "name": "Xcode_27.3_beta.xip",
+   "bytes": 2075401264,
+   "sha256": "7263cc664d441b1b181fbc58719339a064873ffa5e89a86e6f83a88ea015cb58",
+   "provenance": "user-supplied, Apple Developer download (not independently fetched)"
+  },
+  {
+   "name": "Command_Line_Tools_27.3_beta.dmg",
+   "bytes": 526624768,
+   "sha256": "1288aa0c7e4d64f42d7266bd0dcfe29adc7073da03bb688e8ca93add08e1c430",
+   "provenance": "user-supplied"
+  }
+ ],
+ "verification": {
+  "xip": {
+   "xar_signature": "RSA, Apple Software Update Certification Authority, present in TOC heap",
+   "content_sha1_expected": "53a622bf007cdb198d87f3552cecd7aca30b5a80",
+   "content_sha1_measured": "53a622bf007cdb198d87f3552cecd7aca30b5a80",
+   "result": "authentic (member checksum matches the archive TOC)"
+  },
+  "dmg": {
+   "koly_crc32_expected": "0x9e458a9e",
+   "koly_crc32_measured": "0xd5ca3f29",
+   "payloads_failing_sha1": 4,
+   "decompressed_hfs_zero_bytes_pct": 95.1,
+   "result": "damaged / holed copy; not used"
+  }
+ },
+ "release": {
+  "name": "Xcode 27.3 beta",
+  "content_entries": 167522,
+  "content_bytes": 9680000000,
+  "platforms": 10
+ }
+}
