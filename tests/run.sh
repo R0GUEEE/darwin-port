@@ -27,7 +27,7 @@ skip_() { printf '  SKIP  %s (%s)\n' "$1" "$2"; skip=$((skip+1)); }
 
 echo "== build =="
 make -C "$PORT" >/dev/null 2>"$OUT/build.err" || { cat "$OUT/build.err"; exit 1; }
-chmod +x "$BIN" 2>/dev/null; chmod +x "$PORT/xclang" "$ROOT/bin/xclang" 2>/dev/null
+chmod -R +x "$PORT/bin" "$ROOT/bin" 2>/dev/null; chmod +x "$XCLANG" 2>/dev/null
 [ -x "$BIN" ] && ok "loader builds" || { bad "loader builds"; exit 1; }
 
 echo "== T1: freestanding Mach-O, exit code propagation =="

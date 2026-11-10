@@ -1128,6 +1128,17 @@ static const ent_t table[] = {
     { "ccdigest_update", (void *)ds_ccdigest_update },
     { "ccsha256_di", (void *)ds_ccsha256_di },
     { "dyld_register_func_for_add_image", (void *)ds_dyld_register_func_for_add_image },
+    /* libdyld exports both spellings; Apple's own tools import the underscored
+     * private ones, so both must resolve to the same implementation. */
+    { "_dyld_image_count", (void *)ds_dyld_image_count },
+    { "_dyld_get_image_name", (void *)ds_dyld_get_image_name },
+    { "_dyld_get_image_header", (void *)ds_dyld_get_image_header },
+    { "_dyld_get_image_vmaddr_slide", (void *)ds_dyld_get_image_vmaddr_slide },
+    { "_dyld_get_shared_cache_range", (void *)ds_dyld_get_shared_cache_range },
+    { "_dyld_for_each_installed_shared_cache", (void *)ds_dyld_for_each_installed_shared_cache },
+    { "_dyld_shared_cache_for_each_file", (void *)ds_dyld_shared_cache_for_each_file },
+    { "_dyld_register_func_for_add_image", (void *)ds_dyld_register_func_for_add_image },
+    { "_dyld_register_func_for_remove_image", (void *)ds_dyld_register_func_for_remove_image },
     { "dyld_register_func_for_remove_image", (void *)ds_dyld_register_func_for_remove_image },
     { "dyld_get_image_header", (void *)ds_dyld_get_image_header },
     { "dyld_get_image_vmaddr_slide", (void *)ds_dyld_get_image_vmaddr_slide },
