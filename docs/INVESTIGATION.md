@@ -227,6 +227,38 @@ The 46 XPC services name the rest of the architecture: `SourceKitService`,
 `RootDebuggingXPCService`, `AssetLoader` — each a separate process reached over
 mach ports.
 
+## Phase H — macOS SDK vs iOS SDK
+
+From the archive's own file table (no extraction needed):
+
+| | `MacOSX.sdk` | `iPhoneOS.sdk` |
+|---|---|---|
+| framework names | **326** | **308** |
+| frameworks in both | — | 241 |
+| SDK-private framework entries | 15,334 | — (none shipped) |
+| `usr/lib/swift` entries | 691 | 315 |
+| headers | 3,675 | 2,778 |
+| `usr/lib` stubs | 515 | 295 |
+
+67 frameworks are iOS-only — `AlarmKit`, `AppClip`, `AccessorySetupKit`,
+`AdAttributionKit`, `AddressBookUI`, `AssetsLibrary`, `AVSystemRouting` — and
+85 are macOS-only — `AppKit`, `Carbon`, `Cocoa`, `Automator`, `AppleScriptKit`,
+`AudioVideoBridging`, `CompositorServices`. The private-framework tree is a
+macOS-only fixture of the SDK; iOS gets its private frameworks from the OS.
+
+Getting API-surface counts for iOS (classes, symbols) needs one extraction pass
+over `iPhoneOS.sdk/usr/lib/**/*.tbd`; the same tool then applies:
+
+```sh
+xipx.py extract Xcode.xip /root/ios --pattern '*/iPhoneOS.sdk/usr/lib/swift/*.tbd'
+sdk_api.py /root/ios/.../iPhoneOS.sdk -o ios-api.json
+```
+
+Two tools stayed blocked: Apple's own `readtapi` and `tapi-analyze` bind
+completely and then trap on `ud2` inside an LLVM static initialiser — the same
+failure class as `llvm-profdata` and `swift-demangle`. The `.tbd` files are
+analysed here with `sdk_api.py` instead.
+
 ## Where it stands
 
 ```
