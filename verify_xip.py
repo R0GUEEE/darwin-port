@@ -2,7 +2,7 @@
 """Verify an Apple .xip end to end: TOC checksum, TOC signature, cert chain,
 and the archive's own member checksum for `Content`.
 
-  verify_xip.py <file.xip>
+  verify_xip.py <file.xip> [--json out.json]
 
 Prints a verdict and exits 0 only if every step passes.  Needs `openssl` on
 PATH for the RSA and chain steps; the checksum and member-hash steps are
@@ -18,12 +18,17 @@ def run(cmd):
 
 
 def main():
-    if len(sys.argv) != 2:
+    if len(sys.argv) < 2:
         print(__doc__)
         return 2
     path = sys.argv[1]
+    json_out = None
+    if '--json' in sys.argv:
+        json_out = sys.argv[sys.argv.index('--json') + 1]
     size = os.path.getsize(path)
     ok = True
+    res = {'file': os.path.basename(path), 'bytes': size, 'certificates': 0,
+           'chain_ok': None, 'rsa_ok': None, 'cert_names': []}
 
     with open(path, 'rb') as f:
         magic, hsz, ver, tc, tu, ck = struct.unpack('>IHHQQI', f.read(28))
@@ -67,7 +72,9 @@ def main():
         for i, der in enumerate(certs):
             r = run(['openssl', 'x509', '-inform', 'DER', '-in', w('c%d.der' % i, der),
                      '-noout', '-subject'])
-            print('%-28s %s' % ('  cert %d' % i, r.stdout.strip().replace('subject=', '')))
+            name = r.stdout.strip().replace('subject=', '').strip()
+        res['cert_names'].append(name)
+        print('%-28s %s' % ('  cert %d' % i, name))
         pub = run(['openssl', 'x509', '-inform', 'DER', '-in', w('leaf.der', certs[0]),
                    '-pubkey', '-noout'])
         w('pub.pem', pub.stdout.encode())
@@ -76,6 +83,7 @@ def main():
         v = run(['openssl', 'dgst', '-sha1', '-verify', os.path.join(tmp, 'pub.pem'),
                  '-signature', os.path.join(tmp, 'sig.bin'), os.path.join(tmp, 'toc.z')])
         good = 'Verified OK' in v.stdout
+        res['rsa_ok'] = good
         ok &= good
         print('%-28s %s' % ('RSA(TOC) with leaf key', 'VERIFIED' if good else 'FAILED'))
         for i in range(1, len(certs)):
@@ -87,6 +95,7 @@ def main():
                      os.path.join(tmp, 'b.pem'), os.path.join(tmp, 'a.pem')])
             good = ': OK' in v.stdout
             chain_ok &= good
+            res['chain_ok'] = chain_ok
             print('%-28s %s' % ('  cert %d signed by cert %d' % (i - 1, i), 'OK' if good else 'FAIL'))
         ok &= chain_ok
 
@@ -112,8 +121,20 @@ def main():
         got = h.hexdigest()
         good = got == want
         ok &= good
+        res['content_sha1_ok'] = good
         print('%-28s %s' % ('sha1(%s)' % MEMBER, 'MATCH' if good else 'MISMATCH'))
 
+    if json_out:
+        import json as _json
+        res['cert_names'] = []
+        for i, der in enumerate(certs):
+            r = run(['openssl', 'x509', '-inform', 'DER', '-in', w('cn%d.der' % i, der),
+                     '-noout', '-subject'])
+            res['cert_names'].append(r.stdout.strip().replace('subject=', '').strip())
+        res.update({'toc_sha1': calc.hex(), 'toc_sha1_ok': same,
+                    'signature_bytes': len(sig), 'certificates': len(certs),
+                    'verdict': 'authentic' if ok else 'failed'})
+        _json.dump(res, open(json_out, 'w'), indent=1)
     print()
     print('VERDICT: %s' % ('authentic — signed by Apple and internally consistent'
                            if ok else 'FAILED a check above'))
