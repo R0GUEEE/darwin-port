@@ -1,113 +1,262 @@
 # darwin-port
 
-Extract Apple's Xcode archives at the byte level, then **run the Darwin
-toolchain they contain on Linux** — a Mach-O loader with a libSystem ABI shim,
-and a cross-compiler that builds real Mach-O against the real SDK.
+Extract Apple Xcode archives, inspect their contents, and run a useful subset of the Darwin toolchain on Linux. The project contains a Mach-O loader with a libSystem ABI shim, archive inspection tools, and a cross-compiler that emits real Mach-O binaries against a local macOS SDK.
 
-No macOS host is involved, and no Apple binary is redistributed.
+No macOS host is required. Apple SDKs and Xcode archives are not included or downloaded by this project.
 
-## What it does
+## Quick install (Alpine or Debian/Ubuntu)
 
-```sh
-# run a real Xcode tool
-$ darwinld run .../usr/bin/otool -h a.out
-Mach header
-      magic  cputype cpusubtype  caps    filetype ncmds sizeofcmds      flags
- 0xfeedfacf 16777228          0  0x00           2    16       1120 0x00200085
-
-# build for macOS on Linux, then run the result here
-$ DARWIN_SDK=/root/xc/.../MacOSX.sdk xclang -O2 -o hello hello.c
-$ darwinld run hello
-args=2 first=ARG1 pi=3.1416 sorted=1359
-
-# unpack a 2 GB .xip (10.4 GiB of stream) in one pass
-$ python3 xipx.py extract Xcode.xip /root/xc --include '.../MacOSX.sdk/usr'
-
-# build an Xcode project without Xcode, then run it
-$ python3 pxcodebuild.py build Demo.xcodeproj --sdk $SDK
-[macosx] Demo → build/Demo.app   1 objects, 33536 bytes binary
-```
-
-## Status
-
-| | |
-|---|---|
-| XIP integrity | **authentic** — RSA signature over the TOC verifies, chain to Apple Root CA, `sha1(Content)` matches |
-| CLT DMG | **damaged** — CRC mismatch, 4 payloads holed, 95 % zeros |
-| Mach-O images parsed | 138 (155 arm64 slices, 25 x86_64, 2 arm64_32) |
-| toolchain executables that bind fully | **40 of 76** |
-| verified running | `ar`, `otool`, `nm`, `size`, `strings`, `ctags`, `bison`, `flex`, `m4`, `gperf`, `clang-format`, … |
-| cross-compile to `arm64-apple-macos` | **works**, output runs through the loader |
-| build an `.xcodeproj` without Xcode | **works** — `pxcodebuild` → `.app`, runs |
-| ObjC / Swift / CoreFoundation | **does not run** — 3,019 + 1,084 + 904 unresolved names |
-| Windows | backend written, **never compiled** |
-
-## Layout
-
-```
-src/        loader: macho (parse+fixups+trie), dso (images), shim (ABI), fmt (varargs)
-bin/        darwinld (built), xclang
-*.py        xipx (xip) · dmgx (dmg) · xarx + pkgx (pkg) · inventory · hdrmerge
-            pxcodebuild (build .xcodeproj on Linux) · swift_abi (Swift ABI coverage)
-docs/       17 documents — start at docs/INDEX.md
-reports/    acquisition, dependency graph, 167,522-entry inventory (gzipped)
-specs/      behavioural contracts for the loader and the containers
-tests/      run.sh + fixtures — 12 tests, no Apple SDK needed for 11 of them
-```
-
-Build and test:
+The guided installer detects the package manager, installs host dependencies, validates the environment, and runs the test suite:
 
 ```sh
-make            # → bin/darwinld
-make test       # → suite result depends on optional Xcode tools
+git clone https://github.com/R0GUEEE/darwin-port.git
+cd darwin-port
+./scripts/install.sh
 ```
 
-## Documentation
-
-| | |
-|---|---|
-| [INDEX](docs/INDEX.md) | the map, and which doc answers your question |
-| [QUICKSTART](docs/QUICKSTART.md) | install → build → run, in four steps |
-| [DEPENDENCIES](docs/DEPENDENCIES.md) | audited host requirements and bootstrap setup |
-| [CONFIGURATION](docs/CONFIGURATION.md) | smart installer, profiles, environment template, SDK/runtime paths |
-| [ARCHITECTURE](docs/ARCHITECTURE.md) | why a loader, and how the pieces fit |
-| [DARWINLD](docs/DARWINLD.md) | loader internals: mapping, fixups, binding, diagnostics |
-| [ABI](docs/ABI.md) | Darwin vs Linux, structure by structure, with offsets |
-| [CLI](docs/CLI.md) | every tool and environment variable |
-| [FORMATS](docs/FORMATS.md) | xip, xar, pbzx, cpio-odc, dmg/UDIF |
-| [XCODE-ON-LINUX](docs/XCODE-ON-LINUX.md) | the IDE verdict, the project builder, the roadmap |
-| [SWIFT](docs/SWIFT.md) | Swift for iOS → Linux: ABI vs runtime, with measurements |
-| [COMPATIBILITY](docs/COMPATIBILITY.md) | what runs, where, and how it was measured |
-| [COMPAT](docs/COMPAT.md) | one line per translated call + its proving test |
-| [DEVIATIONS](docs/DEVIATIONS.md) | every deliberate difference from macOS |
-| [TROUBLESHOOTING](docs/TROUBLESHOOTING.md) | symptom → cause → fix |
-| [REPRODUCING](docs/REPRODUCING.md) | the full recipe with budgets |
-| [INVESTIGATION](docs/INVESTIGATION.md) | the reverse-engineering log |
-| [GLOSSARY](docs/GLOSSARY.md) | xar, pbzx, odc, chained fixups, TLV, … |
-
-## Build and setup
+This installs the **full** profile. To install only the loader and Python utilities:
 
 ```sh
-./bootstrap.sh --install   # optional: install host build/test tools (Alpine/Debian)
+./scripts/install.sh --profile core
+```
+
+To inspect requirements without installing packages:
+
+```sh
+./scripts/install.sh --check-only --no-sdk --no-tests
+```
+
+The default installer runs the test suite. Add `--no-tests` to install and configure without running it.
+The installer uses `apk` on Alpine and `apt-get` on Debian/Ubuntu. Package installation may require root or `sudo`. On other Linux distributions, install the packages listed below manually, then run `./scripts/doctor.sh` and `make test`.
+
+## Requirements
+
+### Full build and test profile
+
+| Requirement | Purpose | Alpine package | Debian/Ubuntu package |
+|---|---|---|---|
+| `make`, C compiler, libc development files | Build the loader | `build-base` | `build-essential` |
+| Python 3 | Utilities and test orchestration | `python3` | `python3` |
+| LLVM `clang` | Compile Darwin-target fixtures | `clang` | `clang` |
+| LLVM `llvm-mc` | Assemble Mach-O fixtures | `llvm` | `llvm` |
+| `ld64.lld` | Link Mach-O fixtures | `lld` | `lld` |
+| OpenSSL CLI | Verify XIP certificate chain/signature | `openssl` | `openssl` |
+
+The Python utilities use only the standard library. No `pip`, virtualenv, `requirements.txt`, CMake, or Docker setup is required. LLVM 19.1.4 is the validated environment; versions are not pinned by the installer.
+
+### Optional requirements
+
+- **macOS SDK:** Needed only for compiling against Apple's SDK or building Xcode projects. Supply an SDK obtained separately; this project does not fetch or distribute Apple SDK content.
+- **Xcode command-line tools:** `APPLE_BIN` enables optional tests against extracted Apple tools. These tests skip if unavailable.
+- **Guest `libc++`, `libc++abi`, or zlib libraries:** Needed only by guest programs importing those libraries, not to build or test the loader.
+
+## Full installation from a clean machine
+
+### 1. Clone the project
+
+```sh
+git clone https://github.com/R0GUEEE/darwin-port.git
+cd darwin-port
+```
+
+### 2. Install dependencies and run setup
+
+Alpine, Debian, or Ubuntu:
+
+```sh
+./scripts/install.sh
+```
+
+The default `full` profile installs the C build tools, Python 3, LLVM tools, and OpenSSL, then runs the doctor and test suite. For a lighter install:
+
+```sh
+./scripts/install.sh --profile core
+```
+
+For a non-mutating tool check with no tests:
+
+```sh
+./scripts/install.sh --check-only --no-sdk --no-tests
+```
+
+To install dependencies but skip tests:
+
+```sh
+./scripts/install.sh --no-tests
+```
+
+### 3. Verify the installation manually
+
+```sh
+./scripts/doctor.sh
 ./bootstrap.sh --check
-make
+make clean
 make test
 ```
 
-The loader build itself is C plus one assembly file; Mach-O fixture tests also
-need LLVM `clang`, `llvm-mc`, and `ld64.lld`. Python utilities use only the
-standard library. No SDK, Xcode download, or optional guest runtime libraries
-are needed for the default build/test. See [dependency and setup details](docs/DEPENDENCIES.md)
-and the [configuration guide](docs/CONFIGURATION.md). `src/plat_win32.c` is the platform seam for Windows (see [ARCHITECTURE](docs/ARCHITECTURE.md)).
+A successful suite ends with a summary like `passed 13, failed 0`. The SDK is optional for these tests. A few Apple-tool integration tests are skipped unless `APPLE_BIN` points to an extracted toolchain; the regular Mach-O and loader tests do not need it.
 
-## Honesty
+### 4. Build and run the loader
 
-Every number in the docs is measured on this device and marked as such.
-Unverified things are labelled: the Windows build has never been compiled, no
-macOS host existed for differential testing, and two tools (`llvm-profdata`,
-`swift-demangle`) bind completely and then trap in LLVM's own initialiser —
-binding is not running.
+```sh
+make
+./bin/darwinld info /path/to/macho
+./bin/darwinld check /path/to/macho
+./bin/darwinld run /path/to/macho arg1 arg2
+```
 
-The companion tree `workspace/xcode-re/` holds the audit trail: skill-shaped
-reports, the 167,522-entry inventory, dependency classification, behavioural
-specs and an 11-test suite.
+The `darwinld` program loads and executes supported Darwin arm64 Mach-O binaries. It does not provide a full macOS environment or implement all Apple frameworks; check unresolved symbols before running a tool.
+
+## Optional: install a local macOS SDK path
+
+SDK acquisition is separate. If you already have a `MacOSX.sdk` directory, validate it and save its path:
+
+```sh
+./scripts/sdk-setup.sh /absolute/path/to/MacOSX.sdk --write-config darwin-port.env
+./scripts/doctor.sh
+```
+
+Alternatively, use the guided SDK profile:
+
+```sh
+./scripts/install.sh --profile sdk --sdk /absolute/path/to/MacOSX.sdk
+```
+
+The SDK should contain at least:
+
+```text
+MacOSX.sdk/
+├── usr/include/
+├── usr/lib/
+└── System/Library/Frameworks/
+```
+
+The generated `darwin-port.env` is a local shell assignment file and is not committed. Load it into the current shell before using SDK-dependent tools:
+
+```sh
+set -a
+. ./darwin-port.env
+set +a
+```
+
+Or set the SDK only for one command:
+
+```sh
+DARWIN_SDK=/absolute/path/to/MacOSX.sdk ./xclang -O2 -o hello hello.c
+```
+
+Cross-compile and run a simple program:
+
+```sh
+cat > hello.c <<'EOF'
+#include <stdio.h>
+int main(void) { puts("hello from Darwin"); return 0; }
+EOF
+DARWIN_SDK=/absolute/path/to/MacOSX.sdk ./xclang -O2 -o hello hello.c
+./bin/darwinld run ./hello
+```
+
+To choose a target and deployment version:
+
+```sh
+DARWIN_SDK=/absolute/path/to/MacOSX.sdk \
+DARWIN_TARGET=arm64-apple-macos14.0 \
+DARWIN_MINOS=14.0 \
+  ./xclang -O2 -o hello hello.c
+```
+
+Build a supported Xcode project:
+
+```sh
+python3 pxcodebuild.py build path/to/App.xcodeproj \
+  --sdk /absolute/path/to/MacOSX.sdk \
+  --out ./build
+```
+
+Project-builder limitations (Swift, asset catalogs, storyboards, signing, target dependencies, and `.xcconfig`) are documented in [`docs/CLI.md`](docs/CLI.md) and [`docs/XCODE-ON-LINUX.md`](docs/XCODE-ON-LINUX.md).
+
+## Optional: verify an Xcode archive and extract tools
+
+These steps require a separately obtained Xcode `.xip` and substantial free disk space. Verify the archive before extracting:
+
+```sh
+python3 verify_xip.py /path/to/Xcode.xip
+```
+
+Extract selected content, for example the macOS SDK and toolchain binaries:
+
+```sh
+python3 xipx.py extract /path/to/Xcode.xip ./xcode-extracted \
+  --include 'Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk' \
+  --include 'Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin'
+```
+
+Xcode XIP layouts vary by release. List the archive first and adjust prefixes to the paths actually present:
+
+```sh
+python3 xipx.py list /path/to/Xcode.xip -o xip-manifest.json
+```
+
+The extracted Xcode SDK may contain `NULLcanary` placeholder headers. The documented repair flow uses headers harvested from other SDKs in the same archive. See [`docs/REPRODUCING.md`](docs/REPRODUCING.md) and [`docs/QUICKSTART.md`](docs/QUICKSTART.md) before attempting full archive reproduction.
+
+For optional real-toolchain tests, point `APPLE_BIN` at the extracted tool directory:
+
+```sh
+APPLE_BIN="$PWD/xcode-extracted/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin" \
+  make test
+```
+
+## Configuration reference
+
+| Variable | Purpose | Default |
+|---|---|---|
+| `DARWIN_SDK` | macOS SDK used by `xclang` / `pxcodebuild.py` | `/opt/xcode/MacOSX.sdk` |
+| `DARWIN_TARGET` | Clang target triple | `arm64-apple-macos15.0` |
+| `DARWIN_MINOS` | Minimum macOS version | `15.0` |
+| `HOST_CLANG` | Host Clang executable | `clang` |
+| `DS_SYSROOT` | Prefix for resolving guest absolute install names | unset |
+| `DS_LIB_PATH` | Colon-separated guest dylib paths | unset |
+| `DEVELOPER_DIR` | Developer directory returned to guest tools | unset |
+| `APPLE_BIN` | Extracted Apple tool directory for optional tests | unset |
+
+The installer exposes additional switches; use:
+
+```sh
+./scripts/install.sh --help
+```
+
+## What the project supports
+
+- Inspect XIP, xar, DMG, and package formats using Python utilities.
+- Parse and load supported arm64 Mach-O executables and dylibs.
+- Translate a subset of Darwin ABI calls through the Linux host shim.
+- Cross-compile supported C projects for macOS when a usable SDK is configured.
+- Run a measured subset of Xcode command-line tools under the loader.
+
+It is not a full macOS compatibility layer: Objective-C, Swift runtime, CoreFoundation, and most Apple frameworks are incomplete. Review [`docs/COMPATIBILITY.md`](docs/COMPATIBILITY.md), [`docs/TROUBLESHOOTING.md`](docs/TROUBLESHOOTING.md), and [`docs/INDEX.md`](docs/INDEX.md).
+
+## Repository map
+
+```text
+src/        Mach-O loader, image graph, ABI shim, formatter
+scripts/    installer, environment doctor, SDK path helper
+*.py        archive, SDK, inventory, build and verification tools
+tests/      compatibility suite and fixtures
+docs/       setup, CLI, architecture, ABI and reproduction guides
+reports/    measured inventories and dependency reports
+specs/      behavioural and format specifications
+```
+
+## Key documentation
+
+- [Quickstart](docs/QUICKSTART.md)
+- [Installation dependencies](docs/DEPENDENCIES.md)
+- [Configuration and installer](docs/CONFIGURATION.md)
+- [CLI reference](docs/CLI.md)
+- [Compatibility status](docs/COMPATIBILITY.md)
+- [Troubleshooting](docs/TROUBLESHOOTING.md)
+- [Full reproduction workflow](docs/REPRODUCING.md)
+
+## License
+
+See [LICENSE](LICENSE) and [LICENSES.md](LICENSES.md)
