@@ -14,7 +14,7 @@ cd darwin-port
 ./scripts/install.sh
 ```
 
-This installs the **full** profile. To install only the loader and Python utilities:
+This installs the **full** profile and runs the compatibility suite. To install only the loader and Python utilities (without the Mach-O test toolchain):
 
 ```sh
 ./scripts/install.sh --profile core
@@ -67,7 +67,7 @@ Alpine, Debian, or Ubuntu:
 ./scripts/install.sh
 ```
 
-The default `full` profile installs the C build tools, Python 3, LLVM tools, and OpenSSL, then runs the doctor and test suite. For a lighter install:
+The default `full` profile installs the C build tools, Python 3, LLVM tools, and OpenSSL, then runs the doctor and test suite. The `core` profile installs only the loader and Python utility requirements and skips fixture tests that need LLVM. For a lighter install:
 
 ```sh
 ./scripts/install.sh --profile core

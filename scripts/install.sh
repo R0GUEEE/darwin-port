@@ -13,7 +13,7 @@ usage() {
 Usage: scripts/install.sh [options]
 
 Profiles:
-  --profile core       loader build + Python utilities (default: full)
+  --profile core       loader build + Python utilities (no Mach-O test toolchain)
   --profile full       core plus LLVM Mach-O tools and XIP-verification OpenSSL
   --profile sdk        full plus validation/persistence of an already available SDK
 
@@ -59,21 +59,35 @@ else
   BASE=; FULL=
 fi
 if [ "$PROFILE" = core ]; then TOOLS=$BASE; else TOOLS="$BASE $FULL"; fi
+if [ "$PROFILE" = core ]; then RUN_TESTS=0; fi
 if [ "$INSTALL" -eq 1 ]; then
   [ -n "$PKG" ] || { echo 'No supported package manager found. Use --check-only or install tools manually.' >&2; exit 1; }
   if [ "$PKG" = apt-get ]; then
-    if [ "$(id -u)" -eq 0 ]; then SUDO=; else SUDO=sudo; fi
-    $SUDO apt-get update
-    # shellcheck disable=SC2086
-    DEBIAN_FRONTEND=noninteractive $SUDO apt-get install -y $TOOLS
+    if [ "$(id -u)" -eq 0 ]; then
+      apt-get update
+      # shellcheck disable=SC2086
+      DEBIAN_FRONTEND=noninteractive apt-get install -y $TOOLS
+    else
+      command -v sudo >/dev/null 2>&1 || { echo 'apt installation needs root or sudo' >&2; exit 1; }
+      sudo apt-get update
+      # shellcheck disable=SC2086
+      sudo env DEBIAN_FRONTEND=noninteractive apt-get install -y $TOOLS
+    fi
   else
-    if [ "$(id -u)" -eq 0 ]; then APK=apk; else APK='sudo apk'; fi
+    if [ "$(id -u)" -eq 0 ]; then APK='apk'; else
+      command -v sudo >/dev/null 2>&1 || { echo 'apk installation needs root or sudo' >&2; exit 1; }
+      APK='sudo apk'
+    fi
     # shellcheck disable=SC2086
     $APK add $TOOLS
   fi
 fi
 printf 'darwin-port installer\nprofile: %s\npackage manager: %s\n' "$PROFILE" "${PKG:-none}"
-if [ "$PROFILE" = core ]; then DARWIN_PORT_PROFILE=core "$ROOT/scripts/doctor.sh"; else DARWIN_PORT_PROFILE=full "$ROOT/scripts/doctor.sh"; fi
+if [ "$PROFILE" = core ]; then
+  DARWIN_PORT_PROFILE=core "$ROOT/scripts/doctor.sh"
+else
+  DARWIN_PORT_PROFILE=full "$ROOT/scripts/doctor.sh"
+fi
 if [ "$CONFIGURE_SDK" = explicit ]; then
   [ -n "$SDK_PATH" ] || { echo 'empty SDK path' >&2; exit 2; }
   "$ROOT/scripts/sdk-setup.sh" "$SDK_PATH" --write-config "$CONFIG"
@@ -84,7 +98,11 @@ elif [ "$CONFIGURE_SDK" = auto ]; then
     printf 'SDK step skipped: no local macOS SDK detected. Configure one later with:\n  scripts/sdk-setup.sh /path/to/MacOSX.sdk --write-config %s\n' "$CONFIG"
   fi
 fi
-if [ "$RUN_TESTS" -eq 1 ]; then
+if [ "$PROFILE" = core ]; then
+  make -C "$ROOT" all
+elif [ "$RUN_TESTS" -eq 1 ]; then
   make -C "$ROOT" test
+else
+  make -C "$ROOT" all
 fi
 printf '\nSetup complete. To use the saved config in this shell:\n  set -a; . %s; set +a\n' "$CONFIG"
