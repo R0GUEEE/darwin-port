@@ -3,28 +3,31 @@
 Four things you can do, in increasing order of effort. Each section is
 self-contained.
 
-## 0. Prerequisites
+## 0. Prerequisites and bootstrap
 
-| need | why | install |
-|---|---|---|
-| a C compiler | builds the loader | `apk add build-base` / `apt install build-essential` |
-| LLVM 19 `clang` + `ld64.lld` | builds Mach-O fixtures and cross-compiles | `apk add clang lld llvm` |
-| python3 | extraction and reporting scripts | `apk add python3` |
-| ~50 GB free | the XIP expands to ~10 GiB of stream, ~1.3 GB extracted | — |
-| `libc++.so.1`, `libz.so.1` | optional: lets C++/zlib imports resolve | `apk add libc++ zlib` |
-
-No macOS host is needed for anything below.
-
-## 1. Build the loader
+The default build/test needs `make`, a C compiler, LLVM `clang`, `llvm-mc`,
+`ld64.lld`, and Python 3. There are no third-party Python packages. Install
+and check the tools on Alpine or Debian/Ubuntu with:
 
 ```sh
-cd workspace/darwin-port/src
-cc -O2 -o ../bin/darwinld main.c macho.c shim.c fmt.c fmt_asm.S plat_posix.c dso.c
+./bootstrap.sh --install   # omit if tools are already installed
+./bootstrap.sh --check
 ```
 
-That is the whole build — no configure, no dependencies. The binary is ~85 KB.
-If your filesystem drops the executable bit on create (some iOS/mobile
-filesystems do), `chmod +x ../bin/darwinld`.
+See [DEPENDENCIES](DEPENDENCIES.md) for package mapping, optional guest
+runtime libraries, and the dependency rationale. No macOS host, Xcode archive,
+SDK, or large disk allocation is needed for the default tests; SDK extraction
+is only needed for cross-compiling against Apple's SDK or running its tools.
+
+## 1. Build and validate the loader
+
+```sh
+make                 # → bin/darwinld
+make test             # build and run compatibility suite
+```
+
+The Makefile is the canonical build entry point. If your filesystem drops the
+executable bit on create (some iOS/mobile filesystems do), `make` sets it.
 
 ## 2. Run a Darwin binary
 

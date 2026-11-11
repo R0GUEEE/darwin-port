@@ -20,6 +20,14 @@ Linux host (iSH/Alpine); a laptop is roughly an order of magnitude faster.
 Total ≈ 90 minutes of wall clock, 11 GB of disk at peak (the 9.9 GB header
 harvest exists only to repair placeholders and can be deleted afterwards).
 
+## 0. Build and test without an Xcode archive
+
+The compatibility suite does not require the large XIP or a real SDK. From a
+clean checkout, run `./bootstrap.sh --check` (or `--install` on Alpine or
+Debian/Ubuntu), then `make clean && make test`. See
+[DEPENDENCIES](DEPENDENCIES.md) for exact host requirements. Continue below
+only when reproducing the archive-derived reports or extracting an SDK.
+
 ## 1. Verify before you extract
 
 ```sh

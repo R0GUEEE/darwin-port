@@ -40,7 +40,8 @@ Two trees exist and they are not duplicates:
 
 | doc | answers |
 |---|---|
-| [QUICKSTART](QUICKSTART.md) | what to install, what to type, in what order |
+| [QUICKSTART](QUICKSTART.md) | bootstrap, build, run, and cross-compile |
+| [DEPENDENCIES](DEPENDENCIES.md) | required/optional host tools and setup rationale |
 | [ARCHITECTURE](ARCHITECTURE.md) | how the pieces fit, and why a loader and not a converter |
 | [DARWINLD](DARWINLD.md) | loader internals: mapping, fixups, binding, entry, diagnostics |
 | [ABI](ABI.md) | Darwin vs Linux, structure by structure, with offsets and flags |

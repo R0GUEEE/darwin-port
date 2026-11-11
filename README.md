@@ -59,7 +59,7 @@ Build and test:
 
 ```sh
 make            # → bin/darwinld
-make test       # → passed 12, failed 0
+make test       # → suite result depends on optional Xcode tools
 ```
 
 ## Documentation
@@ -68,6 +68,7 @@ make test       # → passed 12, failed 0
 |---|---|
 | [INDEX](docs/INDEX.md) | the map, and which doc answers your question |
 | [QUICKSTART](docs/QUICKSTART.md) | install → build → run, in four steps |
+| [DEPENDENCIES](docs/DEPENDENCIES.md) | audited host requirements and bootstrap setup |
 | [ARCHITECTURE](docs/ARCHITECTURE.md) | why a loader, and how the pieces fit |
 | [DARWINLD](docs/DARWINLD.md) | loader internals: mapping, fixups, binding, diagnostics |
 | [ABI](docs/ABI.md) | Darwin vs Linux, structure by structure, with offsets |
@@ -83,15 +84,20 @@ make test       # → passed 12, failed 0
 | [INVESTIGATION](docs/INVESTIGATION.md) | the reverse-engineering log |
 | [GLOSSARY](docs/GLOSSARY.md) | xar, pbzx, odc, chained fixups, TLV, … |
 
-## Build
+## Build and setup
 
 ```sh
-cd src
-cc -O2 -o ../bin/darwinld main.c macho.c shim.c fmt.c fmt_asm.S plat_posix.c dso.c
+./bootstrap.sh --install   # optional: install host build/test tools (Alpine/Debian)
+./bootstrap.sh --check
+make
+make test
 ```
 
-One command, no dependencies, ~85 KB. `platform` seam for Windows is
-`src/plat_win32.c` (see [ARCHITECTURE](docs/ARCHITECTURE.md)).
+The loader build itself is C plus one assembly file; Mach-O fixture tests also
+need LLVM `clang`, `llvm-mc`, and `ld64.lld`. Python utilities use only the
+standard library. No SDK, Xcode download, or optional guest runtime libraries
+are needed for the default build/test. See [dependency and setup details](docs/DEPENDENCIES.md).
+`src/plat_win32.c` is the platform seam for Windows (see [ARCHITECTURE](docs/ARCHITECTURE.md)).
 
 ## Honesty
 
