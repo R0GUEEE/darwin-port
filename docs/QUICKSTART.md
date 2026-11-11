@@ -3,24 +3,25 @@
 Four things you can do, in increasing order of effort. Each section is
 self-contained.
 
-## 0. Prerequisites and bootstrap
+## 0. Prerequisites and installation
 
-The default build/test needs `make`, a C compiler, LLVM `clang`, `llvm-mc`,
-`ld64.lld`, and Python 3. There are no third-party Python packages. Install
-and check the tools on Alpine or Debian/Ubuntu with:
+Use the guided installer on Alpine or Debian/Ubuntu:
 
 ```sh
-./bootstrap.sh --install   # omit if tools are already installed
-./bootstrap.sh --check
+./scripts/install.sh
 ```
 
-See [DEPENDENCIES](DEPENDENCIES.md) for package mapping, optional guest
-runtime libraries, and the dependency rationale. No macOS host, Xcode archive,
-SDK, or large disk allocation is needed for the default tests; SDK extraction
-is only needed for cross-compiling against Apple's SDK or running its tools.
-After extracting an SDK, pass it to `scripts/install.sh --profile sdk --sdk /path/to/MacOSX.sdk`
-to validate and persist the path, or use `scripts/sdk-setup.sh` directly. See
-[CONFIGURATION](CONFIGURATION.md) for installer profiles and persistent settings.
+It installs the full tool profile, validates it, builds the loader, and runs
+the tests. Use `--profile core` for a minimal loader build, or
+`--check-only --no-sdk` if dependencies are already present. The installer is
+the primary setup path; see [INSTALLATION](INSTALLATION.md) for the complete
+clean-host workflow, dependency table, manual setup, SDK configuration, and
+troubleshooting.
+
+The default tests need no macOS host, SDK, or Xcode archive. SDK extraction is
+only needed for cross-compiling against Apple's SDK or running extracted Apple
+tools. See [DEPENDENCIES](DEPENDENCIES.md) for package mapping and dependency
+rationale, and [CONFIGURATION](CONFIGURATION.md) for profiles and persistent settings.
 
 ## 1. Build and validate the loader
 

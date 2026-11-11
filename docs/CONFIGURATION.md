@@ -19,7 +19,8 @@ files automatically, so source it in the shell before invoking tools.
 
 Run `scripts/install.sh` for a guided setup. It detects Alpine or Debian/Ubuntu,
 installs only the packages for the selected profile, validates tools, optionally
-configures a locally available SDK, and runs the suite:
+configures a locally available SDK, builds the loader, and (for `full`) runs
+the suite. The canonical end-to-end guide is [INSTALLATION](INSTALLATION.md).
 
 ```sh
 scripts/install.sh                         # full setup + tests

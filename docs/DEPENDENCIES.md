@@ -16,12 +16,14 @@ XML, JSON, hashing and filesystem modules). Do not create a virtualenv or run
 | Python 3 | XIP/DMG/pkg tools, project builder, tests | `python3` | `python3` |
 | OpenSSL CLI | optional: verify XIP RSA signature and certificate chain | `openssl` | `openssl` |
 
-Install or verify using `./bootstrap.sh --install` or `./bootstrap.sh --check`.
-The bootstrap supports Alpine (`apk`) and Debian/Ubuntu (`apt-get`); it only
-installs OS packages when explicitly asked with `--install`, and requires
-package-manager privileges. OpenSSL is included for the project's XIP
-verification utility, though it is not needed to build or test the loader. Versions available from the distribution are used;
-LLVM 19 is the tested baseline here, not a hard-coded mandatory version.
+Use `./scripts/install.sh` as the primary setup path. It supports Alpine (`apk`)
+and Debian/Ubuntu (`apt-get`), with `--check-only` to avoid package changes.
+Package installation requires root or `sudo`. `./scripts/doctor.sh` checks the
+selected `core` or `full` profile. `bootstrap.sh --check` and `--install` remain
+available for compatibility, but the installer and doctor are the maintained
+profile-aware path. OpenSSL is included for XIP signature verification; it is
+not needed to build or test the loader. Distribution package versions are used;
+LLVM 19 is the tested baseline, not a hard-coded mandatory version.
 
 ## Optional runtime libraries
 
@@ -37,17 +39,19 @@ framework support.
 From a clean checkout:
 
 ```sh
-./bootstrap.sh --install   # optional if the listed tools already exist
-./bootstrap.sh --check
+./scripts/install.sh         # recommended: installs, checks, builds, tests
+# or, when dependencies are already installed:
+./scripts/install.sh --check-only --no-sdk
 make clean
 make test
 ```
 
-`make test` builds the loader, assembles/links fixture Mach-O images, compiles
-Darwin-target fixtures, and runs the compatibility suite. Some checks require
-only the checked-in mini SDK; real Xcode-tool tests run only when `APPLE_BIN`
-points to an extracted toolchain. No Apple host, network download, Xcode XIP,
-SDK extraction, or Python packages are needed for the default test suite.
+The default test suite is run by `./scripts/install.sh` or `make test`. It builds
+the loader, assembles/links fixture Mach-O images, compiles Darwin-target
+fixtures, and runs the compatibility suite. Some checks require only the
+checked-in mini SDK; real Xcode-tool tests run only when `APPLE_BIN` points to
+an extracted toolchain. No Apple host, network download, Xcode XIP, SDK
+extraction, or Python packages are needed for the default test suite.
 
 To cross-compile an application, separately obtain a legally sourced macOS
 SDK and set `DARWIN_SDK` to its root. SDK acquisition/extraction and its disk

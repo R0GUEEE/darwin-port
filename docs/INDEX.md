@@ -12,6 +12,9 @@ Two trees exist and they are not duplicates:
 
 ## Read it by role
 
+**I want to install, configure, or verify the project**
+→ [INSTALLATION](INSTALLATION.md) → [CONFIGURATION](CONFIGURATION.md)
+
 **I want to know what happens to Swift**
 → [SWIFT](SWIFT.md) → `specs/swift-runtime.md`
 
@@ -40,7 +43,8 @@ Two trees exist and they are not duplicates:
 
 | doc | answers |
 |---|---|
-| [QUICKSTART](QUICKSTART.md) | bootstrap, build, run, and cross-compile |
+| [INSTALLATION](INSTALLATION.md) | canonical install, prerequisites, profiles, SDK setup, verification, troubleshooting |
+| [QUICKSTART](QUICKSTART.md) | build, run, extract, and cross-compile |
 | [DEPENDENCIES](DEPENDENCIES.md) | required/optional host tools and setup rationale |
 | [CONFIGURATION](CONFIGURATION.md) | installer, profiles, environment template, SDK/runtime paths |
 | [ARCHITECTURE](ARCHITECTURE.md) | how the pieces fit, and why a loader and not a converter |
