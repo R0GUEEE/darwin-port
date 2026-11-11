@@ -5,3 +5,6 @@ obj/
 *.pyc
 __pycache__/
 tests/**/build/
+
+darwin-port.env
+darwin-port.env.bak

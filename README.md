@@ -4,44 +4,48 @@ Extract Apple Xcode archives, inspect their contents, and run a useful subset of
 
 No macOS host is required. Apple SDKs and Xcode archives are not included or downloaded by this project.
 
-## Install and verify
-
-For a clean Alpine, Debian, or Ubuntu host:
+## Guided installation and configuration
 
 ```sh
 git clone https://github.com/R0GUEEE/darwin-port.git
 cd darwin-port
-./scripts/install.sh
+./setup.sh
 ```
 
-The default `full` profile installs the host build tools, Python 3, LLVM Mach-O tools, builds `bin/darwinld`, and runs the compatibility suite. Package installation may require root or `sudo`.
+The terminal wizard selects a profile, accepts an optional local SDK, previews
+package operations, and then installs dependencies and saves configuration.
+Python 3.8+ is needed to start; the launcher prints bootstrap instructions if missing.
+Supported package managers: Debian/Ubuntu `apt-get`, Alpine `apk`, Fedora `dnf`,
+and Arch `pacman`. Other distributions can use `--no-packages` after installing
+requirements manually.
 
-If the dependencies are already installed, check and test without installing packages:
+**Host compatibility:** the loader uses ARM64 assembly and requires ARM64 Linux.
+`auto` selects `full` there and `tools` elsewhere. On x64 Linux/WSL, `tools`
+installs the Python archive/inspection utilities; it does not build or execute
+the ARM64 loader. This installer does not add CPU emulation.
 
 ```sh
-./scripts/install.sh --check-only --no-sdk
+./setup.sh plan --json                    # read-only preview
+./setup.sh install --yes                  # automatic compatible profile
+./setup.sh install --profile core --yes   # ARM64 loader, no LLVM fixture tests
+./setup.sh configure --sdk /path/MacOSX.sdk
+./setup.sh doctor
+./setup.sh run -- python3 inventory.py tests/fixtures
 ```
 
-Choose a smaller or faster setup:
+On Windows, install and initialize a Linux WSL distribution, then run
+`.\setup.ps1` from PowerShell in this checkout, or `./setup.sh` inside WSL.
+Use Linux paths for SDK/config arguments. The PowerShell launcher uses the default
+WSL distribution; setup does not install WSL or change its default distribution.
 
-```sh
-./scripts/install.sh --profile core   # loader + Python utilities; build only
-./scripts/install.sh --no-tests       # full dependencies and build, defer tests
-./scripts/install.sh --help           # all installer options
-```
-
-For other Linux distributions, manually install `make`, a C compiler and libc development files, Python 3, `clang`, `llvm-mc`, and `ld64.lld`, then run `./scripts/doctor.sh && make test`. OpenSSL is optional unless verifying XIP signatures.
-
-**A macOS SDK is optional.** The default build and tests need no SDK, Xcode archive, macOS host, Python package installation, virtualenv, Docker, or CMake. For SDK-dependent compilation, supply an SDK separately and configure it with:
-
-```sh
-./scripts/sdk-setup.sh /absolute/path/to/MacOSX.sdk --write-config darwin-port.env
-set -a; . ./darwin-port.env; set +a
-```
-
-The project does not download or redistribute Apple SDK/Xcode content. See the complete [Installation and setup guide](docs/INSTALLATION.md) for prerequisites, profiles, configuration, verification, and troubleshooting.
+See the [complete setup guide](docs/CONFIGURATION.md) for profiles, settings,
+noninteractive use, recovery, logs, and configuration activation. The old
+`scripts/install.sh`, `scripts/doctor.sh`, `scripts/sdk-setup.sh`, and
+`bootstrap.sh` entry points delegate to the unified utility.
 
 ## Build and use
+
+The loader build and execution commands require ARM64 Linux.
 
 ```sh
 make                       # → bin/darwinld

@@ -2,10 +2,21 @@
 
 This is the canonical installation guide for **darwin-port**. It covers the host prerequisites, clean install, optional SDK configuration, verification, and troubleshooting.
 
+Start the interactive utility with `./setup.sh`, or preview with
+`./setup.sh plan --json`. On Windows use `.\setup.ps1` through an initialized
+WSL distribution. Python 3.8+ is required; bootstrap instructions are printed
+if it is missing. See [Configuration](CONFIGURATION.md) for the complete utility
+reference, supported settings, logging, backups, and noninteractive commands.
+
+**The loader requires ARM64 Linux.** Automatic setup chooses `full` on that
+host and `tools` on x64/other hosts. The tools profile provides Python archive
+utilities and OpenSSL without attempting an incompatible loader build.
+
 ## Choose your setup
 
 | Goal | Setup |
 |---|---|
+| Inspect archives on x64 Linux/WSL | `tools` |
 | Build/run the Mach-O loader and use Python archive utilities | `core` |
 | Run the full fixture suite and use `xclang` | `full` (recommended) |
 | Cross-compile against an existing macOS SDK | `full` + SDK path |
@@ -20,7 +31,7 @@ A macOS host, Xcode installation, SDK, Python packages, virtualenv, Docker, CMak
 - POSIX shell
 - `make`
 - C compiler (`cc`) and the host libc development files
-- Python 3 (standard library only)
+- Python 3.8+ (standard library only)
 
 ### Full profile
 
@@ -29,7 +40,7 @@ Everything in core, plus:
 - `clang`
 - `llvm-mc`
 - `ld64.lld`
-- OpenSSL CLI is optional for tests, but required by XIP signature verification
+- OpenSSL CLI (required by full/tools setup for XIP signature verification)
 
 `llvm-mc` assembles Mach-O fixtures; GNU `as` is not a substitute. The tested environment uses LLVM 19, but the installer does not pin versions.
 
@@ -37,7 +48,7 @@ Everything in core, plus:
 
 `libc++.so.1`, `libc++abi.so.1`, and `libz.so.1` are providers for particular guest binaries, not build dependencies. Install the host runtime package only when a guest reports it needs one. They do not add Apple framework, Objective-C, or Swift support.
 
-## Clean install (Alpine, Debian, Ubuntu)
+## Clean install (Alpine, Debian, Ubuntu, Fedora, Arch)
 
 ### 1. Clone and enter the repository
 
@@ -48,18 +59,18 @@ cd darwin-port
 
 ### 2. Install, build, and test
 
-Recommended: full profile. The installer detects `apk` or `apt-get`, installs the relevant packages, checks the toolchain, builds the loader, and runs the compatibility tests.
+The installer detects `apk`, `apt-get`, `dnf`, or `pacman`, installs the selected packages, and checks the toolchain. On ARM64 Linux the default full profile builds and tests the loader; on other hosts the default tools profile skips loader compilation.
 
 ```sh
-./scripts/install.sh
+./setup.sh install --yes
 ```
 
 Package installation may need root or `sudo`. On Debian/Ubuntu, the installer runs `apt-get update` and installs packages noninteractively. On Alpine, it uses `apk add`.
 
-When the tools are already installed, validate and test without a package-manager operation:
+When the tools are already installed, install/build/test without package-manager operations:
 
 ```sh
-./scripts/install.sh --check-only --no-sdk
+./setup.sh install --no-packages --no-sdk
 ```
 
 The core profile installs/checks only the loader and Python utility requirements and builds `bin/darwinld`; it skips LLVM-dependent fixture tests:
@@ -74,9 +85,12 @@ To install the full toolchain but defer tests:
 ./scripts/install.sh --no-tests
 ```
 
-See all options with `./scripts/install.sh --help`.
+Preview without any writes or builds using `./setup.sh plan` or
+`./scripts/install.sh --check-only`. See all options with `./setup.sh --help`.
 
 ### 3. Verify
+
+Run doctor on any host. Run `make test` only on ARM64 Linux.
 
 ```sh
 ./scripts/doctor.sh
@@ -106,7 +120,7 @@ make clean
 make test
 ```
 
-`./bootstrap.sh --check` is a legacy dependency check; use `scripts/doctor.sh` for profile-aware checks. `bootstrap.sh --install` is retained for compatibility, but the guided `scripts/install.sh` is the primary installer.
+`./bootstrap.sh --check` is a legacy dependency check; use `scripts/doctor.sh` for profile-aware checks. `bootstrap.sh --install` is retained for compatibility, and delegates to the unified `setup.sh` utility.
 
 ## Optional macOS SDK setup
 
@@ -133,24 +147,18 @@ Or use the installer to validate an explicit SDK while setting up the full profi
 ./scripts/install.sh --profile sdk --sdk /absolute/path/to/MacOSX.sdk
 ```
 
-The installer writes an SDK setting only when the config file already exists;
-`darwin-port.env` is not created automatically. Copy `darwin-port.env.example`
-first, or create an empty config file, then pass `--config` if it is elsewhere:
+Setup creates configuration automatically, backs up an existing changed file,
+and validates the SDK before package operations. The `sdk` profile requires a
+valid SDK and ARM64 Linux; use `./setup.sh configure --sdk PATH` to configure
+an SDK on other hosts. The default config and backup are git-ignored.
+
+Activate the configuration and checkout commands in the current shell:
 
 ```sh
-cp darwin-port.env.example darwin-port.env
-./scripts/install.sh --profile sdk --sdk /absolute/path/to/MacOSX.sdk
+eval "$(./setup.sh env)"
 ```
 
-The `sdk` profile always uses the full dependency set. The config file is local and should not be committed.
-
-The config file is local and should not be committed. Load it into the current shell before invoking SDK-dependent commands:
-
-```sh
-set -a
-. ./darwin-port.env
-set +a
-```
+Or use `./setup.sh run -- COMMAND` to pass saved settings to one command.
 
 Alternatively, set `DARWIN_SDK` for one command:
 
@@ -205,7 +213,7 @@ For supported Xcode project formats, see [Xcode on Linux](XCODE-ON-LINUX.md) and
 cp darwin-port.env.example darwin-port.env
 ```
 
-The doctor loads `darwin-port.env` automatically. Other programs consume environment variables, so source the file in the shell as shown above. Common settings:
+Setup, doctor, and the command runner read literal assignments from `darwin-port.env` automatically without executing shell code. Other programs consume environment variables, so activate them as shown above. Common settings:
 
 | Variable | Purpose |
 |---|---|

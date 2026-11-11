@@ -5,18 +5,21 @@ self-contained.
 
 ## 0. Prerequisites and installation
 
-Use the guided installer on Alpine or Debian/Ubuntu:
+Use the guided installer (Python 3.8+):
 
 ```sh
-./scripts/install.sh
+./setup.sh
 ```
 
-It installs the full tool profile, validates it, builds the loader, and runs
-the tests. Use `--profile core` for a minimal loader build, or
-`--check-only --no-sdk` if dependencies are already present. The installer is
-the primary setup path; see [INSTALLATION](INSTALLATION.md) for the complete
-clean-host workflow, dependency table, manual setup, SDK configuration, and
-troubleshooting.
+It selects `full` on ARM64 Linux (build and test), and `tools` on other hosts
+(Python archive utilities). Package installation supports Alpine, Debian/Ubuntu,
+Fedora, and Arch. Use `./setup.sh plan` for a read-only preview, or
+`./setup.sh install --no-packages` when dependencies are installed already.
+See [INSTALLATION](INSTALLATION.md) for the clean-host workflow and
+[CONFIGURATION](CONFIGURATION.md) for all utility commands.
+
+Loader build/run/test steps below require ARM64 Linux. Windows users can run
+`.\setup.ps1` through an initialized WSL distribution; x64 WSL uses tools profile.
 
 The default tests need no macOS host, SDK, or Xcode archive. SDK extraction is
 only needed for cross-compiling against Apple's SDK or running extracted Apple
