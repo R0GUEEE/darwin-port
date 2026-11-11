@@ -23,10 +23,10 @@ for tool in make cc clang llvm-mc ld64.lld python3; do
 done
 if [ "$MODE" = --install ]; then
   if command -v apk >/dev/null 2>&1; then
-    apk add build-base clang llvm lld python3
+    apk add build-base clang llvm lld python3 openssl
   elif command -v apt-get >/dev/null 2>&1; then
     apt-get update
-    DEBIAN_FRONTEND=noninteractive apt-get install -y build-essential clang llvm lld python3
+    DEBIAN_FRONTEND=noninteractive apt-get install -y build-essential clang llvm lld python3 openssl
   else
     echo 'No supported package manager (apk or apt-get); install the tools listed above.' >&2
     exit 1

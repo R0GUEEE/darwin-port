@@ -69,6 +69,7 @@ make test       # → suite result depends on optional Xcode tools
 | [INDEX](docs/INDEX.md) | the map, and which doc answers your question |
 | [QUICKSTART](docs/QUICKSTART.md) | install → build → run, in four steps |
 | [DEPENDENCIES](docs/DEPENDENCIES.md) | audited host requirements and bootstrap setup |
+| [CONFIGURATION](docs/CONFIGURATION.md) | environment template, doctor profiles, and SDK/runtime paths |
 | [ARCHITECTURE](docs/ARCHITECTURE.md) | why a loader, and how the pieces fit |
 | [DARWINLD](docs/DARWINLD.md) | loader internals: mapping, fixups, binding, diagnostics |
 | [ABI](docs/ABI.md) | Darwin vs Linux, structure by structure, with offsets |
@@ -96,8 +97,8 @@ make test
 The loader build itself is C plus one assembly file; Mach-O fixture tests also
 need LLVM `clang`, `llvm-mc`, and `ld64.lld`. Python utilities use only the
 standard library. No SDK, Xcode download, or optional guest runtime libraries
-are needed for the default build/test. See [dependency and setup details](docs/DEPENDENCIES.md).
-`src/plat_win32.c` is the platform seam for Windows (see [ARCHITECTURE](docs/ARCHITECTURE.md)).
+are needed for the default build/test. See [dependency and setup details](docs/DEPENDENCIES.md)
+and the [configuration guide](docs/CONFIGURATION.md). `src/plat_win32.c` is the platform seam for Windows (see [ARCHITECTURE](docs/ARCHITECTURE.md)).
 
 ## Honesty
 

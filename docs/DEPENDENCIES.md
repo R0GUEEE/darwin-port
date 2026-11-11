@@ -14,11 +14,13 @@ XML, JSON, hashing and filesystem modules). Do not create a virtualenv or run
 | LLVM `llvm-mc` | assemble arm64 Mach-O fixture | `llvm` | `llvm` |
 | `ld64.lld` | link Mach-O test fixtures / Darwin-target output | `lld` | `lld` |
 | Python 3 | XIP/DMG/pkg tools, project builder, tests | `python3` | `python3` |
+| OpenSSL CLI | optional: verify XIP RSA signature and certificate chain | `openssl` | `openssl` |
 
 Install or verify using `./bootstrap.sh --install` or `./bootstrap.sh --check`.
 The bootstrap supports Alpine (`apk`) and Debian/Ubuntu (`apt-get`); it only
 installs OS packages when explicitly asked with `--install`, and requires
-package-manager privileges. Versions available from the distribution are used;
+package-manager privileges. OpenSSL is included for the project's XIP
+verification utility, though it is not needed to build or test the loader. Versions available from the distribution are used;
 LLVM 19 is the tested baseline here, not a hard-coded mandatory version.
 
 ## Optional runtime libraries

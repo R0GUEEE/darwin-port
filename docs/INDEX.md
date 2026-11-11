@@ -42,6 +42,7 @@ Two trees exist and they are not duplicates:
 |---|---|
 | [QUICKSTART](QUICKSTART.md) | bootstrap, build, run, and cross-compile |
 | [DEPENDENCIES](DEPENDENCIES.md) | required/optional host tools and setup rationale |
+| [CONFIGURATION](CONFIGURATION.md) | profiles, environment template, SDK and runtime paths |
 | [ARCHITECTURE](ARCHITECTURE.md) | how the pieces fit, and why a loader and not a converter |
 | [DARWINLD](DARWINLD.md) | loader internals: mapping, fixups, binding, entry, diagnostics |
 | [ABI](ABI.md) | Darwin vs Linux, structure by structure, with offsets and flags |
