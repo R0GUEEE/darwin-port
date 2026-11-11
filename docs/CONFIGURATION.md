@@ -17,13 +17,24 @@ files automatically, so source it in the shell before invoking tools.
 
 ## Profiles
 
-The setup doctor has two profiles:
+Run `scripts/install.sh` for a guided setup. It detects Alpine or Debian/Ubuntu,
+installs only the packages for the selected profile, validates tools, optionally
+configures a locally available SDK, and runs the suite:
 
-* `core`: loader build and Python utility requirements (`make`, C compiler,
-  Python 3). Use `DARWIN_PORT_PROFILE=core scripts/doctor.sh`.
-* `full` (default): core plus LLVM tools needed by Mach-O fixture tests and
-  SDK cross-compilation (`clang`, `llvm-mc`, `ld64.lld`). An SDK is reported
-  as optional because it is not required for the loader test suite.
+```sh
+scripts/install.sh                         # full setup + tests
+scripts/install.sh --profile core          # loader + Python tools only
+scripts/install.sh --profile sdk           # full + local SDK detection/config
+scripts/install.sh --check-only --no-sdk   # report without installing
+scripts/install.sh --sdk /path/MacOSX.sdk  # configure an explicit SDK
+```
+
+The installer does not fetch an SDK. `--profile core` requires make, a C
+compiler, and Python 3. `full` (default) adds LLVM tools for Mach-O fixture
+tests and SDK cross-compilation (`clang`, `llvm-mc`, `ld64.lld`) plus OpenSSL
+for XIP verification. `sdk` adds discovery/configuration of an already present
+macOS SDK. If no SDK exists, the SDK step is clearly skipped; loader tests
+remain available.
 
 Run `scripts/doctor.sh` after setup. Exit 0 means required tools for the
 selected profile were found. An unset SDK and missing OpenSSL are informational;

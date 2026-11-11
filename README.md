@@ -69,7 +69,7 @@ make test       # → suite result depends on optional Xcode tools
 | [INDEX](docs/INDEX.md) | the map, and which doc answers your question |
 | [QUICKSTART](docs/QUICKSTART.md) | install → build → run, in four steps |
 | [DEPENDENCIES](docs/DEPENDENCIES.md) | audited host requirements and bootstrap setup |
-| [CONFIGURATION](docs/CONFIGURATION.md) | environment template, doctor profiles, and SDK/runtime paths |
+| [CONFIGURATION](docs/CONFIGURATION.md) | smart installer, profiles, environment template, SDK/runtime paths |
 | [ARCHITECTURE](docs/ARCHITECTURE.md) | why a loader, and how the pieces fit |
 | [DARWINLD](docs/DARWINLD.md) | loader internals: mapping, fixups, binding, diagnostics |
 | [ABI](docs/ABI.md) | Darwin vs Linux, structure by structure, with offsets |

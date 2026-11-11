@@ -18,9 +18,9 @@ See [DEPENDENCIES](DEPENDENCIES.md) for package mapping, optional guest
 runtime libraries, and the dependency rationale. No macOS host, Xcode archive,
 SDK, or large disk allocation is needed for the default tests; SDK extraction
 is only needed for cross-compiling against Apple's SDK or running its tools.
-After extracting an SDK, validate its path with `scripts/sdk-setup.sh`, then
-run `scripts/doctor.sh` for a complete environment check. See
-[CONFIGURATION](CONFIGURATION.md) for profiles and persistent path setup.
+After extracting an SDK, pass it to `scripts/install.sh --profile sdk --sdk /path/to/MacOSX.sdk`
+to validate and persist the path, or use `scripts/sdk-setup.sh` directly. See
+[CONFIGURATION](CONFIGURATION.md) for installer profiles and persistent settings.
 
 ## 1. Build and validate the loader
 
