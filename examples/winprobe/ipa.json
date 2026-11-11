@@ -1,0 +1,10 @@
+{
+  "name": "WindowProbe",
+  "bundle_id": "com.example.windowprobe",
+  "version": "1.0",
+  "build": "1",
+  "min_ios": "15.0",
+  "sources": ["main.m"],
+  "frameworks": ["UIKit", "Foundation", "CoreGraphics", "QuartzCore"],
+  "libraries": ["objc", "System"]
+}

@@ -309,3 +309,33 @@ inventory.py tree -o inv.json && darwinld check <candidate>
 # build and run a macOS binary from source, on Linux
 DARWIN_SDK=$SDK xclang -O2 -o x x.c && darwinld run x
 ```
+
+---
+
+## `iosbuild.py` — build an unsigned iOS app
+
+```
+iosbuild.py plan    <dir|ipa.json> [--sdk PATH] [--json]
+iosbuild.py build   <dir|ipa.json> [--sdk PATH] [--out DIR] [-v]
+iosbuild.py ipa     <dir|ipa.json> [--sdk PATH] [--out DIR] [--name NAME]
+iosbuild.py inspect <file.ipa|File.app> [--json]
+```
+
+| command | does | exit |
+|---|---|---|
+| `plan` | resolves the manifest and SDK, prints sources, frameworks, compile flags, overlay path | 0 |
+| `build` | compiles and links a thin arm64 `platform IOS` executable | 0 built |
+| `ipa` | the above, then validates the bundle and writes `Payload/<Name>.app` as an `.ipa`; prints `{ipa, sha256, size}` JSON | 0 packaged |
+| `inspect` | reports an IPA/app: bundle id, executable arch/platform/minos, imports, validation problems | 0 clean, 1 problems |
+
+Exit codes: `0` ok · `1` build/validation failure · `2` usage/manifest
+error · `3` missing SDK or `ld64.lld`.
+
+Environment: `IPHONEOS_SDK` (same as `--sdk`), `XCLANG` (for `pxcodebuild`).
+
+```sh
+python3 iosbuild.py ipa examples/winprobe --out /tmp/out
+python3 iosbuild.py inspect /tmp/out/WindowProbe.ipa
+```
+
+Full contract, including what it refuses to do and why: [IPA](IPA.md).

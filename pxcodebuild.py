@@ -238,10 +238,19 @@ def build(proj_path, target_name=None, sdk=None, outdir=None, verbose=False):
     sdk = sdk or os.environ.get('DARWIN_SDK') or '/opt/xcode/MacOSX.sdk'
     if not os.path.isdir(sdk):
         raise SystemExit('no SDK at %s (set DARWIN_SDK)' % sdk)
-    tools = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'bin')
-    xclang = os.path.join(tools, 'xclang')
-    if not os.path.exists(xclang):
-        raise SystemExit('xclang not found next to pxcodebuild')
+    # `xclang` is a checked-in file at the repository root; `bin/` is make's
+    # gitignored output directory. Looking only in bin/ made `pxcodebuild build`
+    # fail on every fresh clone while working fine in a tree that had been
+    # built once - which is the worst kind of bug to leave in a README command.
+    here = os.path.dirname(os.path.abspath(__file__))
+    candidates = [os.path.join(here, 'xclang'),
+                  os.path.join(here, 'bin', 'xclang'),
+                  (os.environ.get('XCLANG') or '')]
+    xclang = next((c for c in candidates if c and os.path.exists(c)), None)
+    if not xclang:
+        raise SystemExit('xclang not found (looked in %s, %s; set XCLANG)'
+                         % (os.path.join(here, 'xclang'),
+                            os.path.join(here, 'bin', 'xclang')))
 
     for pl in plans:
         cfg = pl['settings']

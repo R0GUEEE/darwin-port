@@ -21,6 +21,9 @@ Two trees exist and they are not duplicates:
 **I want to build an Xcode project on Linux**
 → [XCODE-ON-LINUX](XCODE-ON-LINUX.md) → [CLI §pxcodebuild](CLI.md#pxcodebuildpy--build-an-xcodeproj)
 
+**I want an installable iOS app out of this**
+→ [IPA](IPA.md) → `examples/winprobe/` → `iosbuild.py inspect`
+
 **I want to run a macOS binary on Linux**
 → [QUICKSTART](QUICKSTART.md) → [CLI](CLI.md) → [TROUBLESHOOTING](TROUBLESHOOTING.md)
 
@@ -59,6 +62,7 @@ Two trees exist and they are not duplicates:
 | [REPRODUCING](REPRODUCING.md) | the end-to-end recipe, with timings and sizes |
 | [INVESTIGATION](INVESTIGATION.md) | the reverse-engineering narrative and measurements |
 | [XCODE-ON-LINUX](XCODE-ON-LINUX.md) | what "port Xcode" means: IDE verdict, the project builder, the roadmap |
+| [IPA](IPA.md) | building an unsigned iOS app on Linux: the SDK facts, the validation gate, what it cannot do |
 | [SWIFT](SWIFT.md) | what Swift-for-iOS means off Apple: ABI vs runtime, measured |
 | [GLOSSARY](GLOSSARY.md) | xar, pbzx, odc, chained fixups, TLV, … |
 | [REPORT](REPORT.md) | appendix: first-pass findings, tool-by-tool results |

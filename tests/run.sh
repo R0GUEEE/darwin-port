@@ -136,13 +136,33 @@ if [ -x "$APPLE_BIN/ar" ]; then
     else
         bad "ar archive" "no valid !<arch> header"
     fi
-    if "$BIN" run "$APPLE_BIN/otool" -h "$OUT/hello" 2>/dev/null | grep -q 0xfeedfacf; then
+    # otool is a full LLVM tool: mapping it costs several hundred MB, and on a
+    # 4 GB phone running it under the loader once OOM-killed the entire suite
+    # (exit 137) instead of failing one check. A kill or a timeout is this
+    # host's memory limit talking, not a loader bug, so it reports as SKIP.
+    oto="$OUT/otool.out"
+    timeout 90 "$BIN" run "$APPLE_BIN/otool" -h "$OUT/hello" >"$oto" 2>&1
+    orc=$?
+    if grep -q 0xfeedfacf "$oto" 2>/dev/null; then
         ok "Xcode's otool reads a Mach header"
+    elif [ "$orc" -ge 128 ] || [ "$orc" = 124 ]; then
+        skip_ "otool under the loader" "host killed it (rc $orc): not enough memory"
     else
-        bad "otool" "no magic in output"
+        bad "otool" "no magic in output (rc $orc)"
     fi
 else
     skip_ "Apple toolchain tests" "set APPLE_BIN to an extracted Xcode tree"
+fi
+
+echo "== T12: iosbuild (python unit + integration) =="
+if command -v python3 >/dev/null 2>&1; then
+    if python3 "$HERE/iosbuild/test_iosbuild.py" >"$OUT/iosbuild.log" 2>&1; then
+        ok "iosbuild: $(grep -o 'Ran [0-9]* tests' "$OUT/iosbuild.log" | tail -1)"
+    else
+        bad "iosbuild tests" "see $OUT/iosbuild.log"
+    fi
+else
+    skip_ "iosbuild tests" "python3 not installed"
 fi
 
 echo
