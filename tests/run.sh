@@ -60,6 +60,18 @@ case "$got" in
   *) bad "dylib binding" "got '$got'" ;;
 esac
 
+echo "== T4: explicitly loaded host runtime symbols =="
+cat > "$OUT/hostruntime.c" <<'EOF'
+extern int host_probe_value(void);
+int main(void) { return host_probe_value(); }
+EOF
+DARWIN_SDK="$SDK_MINI" DARWIN_MINOS=14.0 "$PORT/xclang" -O1 -fno-stack-protector \
+    -Wl,-undefined,dynamic_lookup -o "$OUT/hostruntime" "$OUT/hostruntime.c" 2>/dev/null
+cc -shared -fPIC -o "$OUT/libhostprobe.so" "$HERE/fixtures/host_probe.c"
+DS_HOST_LIBS="$OUT/libhostprobe.so" "$BIN" run "$OUT/hostruntime" >/dev/null 2>&1
+[ "$?" = 42 ] && ok "DS_HOST_LIBS loads ELF runtime; dlsym binds the guest import" \
+    || bad "host runtime binding" "expected exit 42"
+
 echo "== T4: unresolved import is an error, not a crash =="
 cat > "$OUT/missing.c" <<'EOF'
 typedef unsigned long size_t;

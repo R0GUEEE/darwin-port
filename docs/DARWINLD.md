@@ -121,6 +121,7 @@ Exit codes: `0` success · `1` load/map failure · `2` usage · `3` encrypted ·
 |---|---|
 | `DS_SYSROOT` | prefix for absolute install names (`/usr/lib/libX.dylib` → `$DS_SYSROOT/usr/lib/libX.dylib`) |
 | `DS_LIB_PATH` | colon-separated search path for dylib basenames |
+| `DS_HOST_LIBS` | Optional colon-separated **host ELF shared-library** paths loaded with `RTLD_GLOBAL` before guest images. Symbol lookup strips the Mach-O leading underscore. Name resolution is not proof of ABI/runtime compatibility; explicit shim entries win. |
 | `DS_MISSING_FILE` | append unresolved symbol names to this file instead of stderr |
 | `DS_TRACE=1` | print every binding: `name (lib N) -> address` |
 | `DS_TRACE_FMT=1` | trace `__sprintf_chk` calls with their format and result |

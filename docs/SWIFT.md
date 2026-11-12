@@ -119,13 +119,22 @@ Three steps, in order of certainty:
    The `.tbd` files this project extracted are exactly what the linker needs.
    This is the useful half for CI and it needs no Apple code beyond headers and
    stubs the user already owns.
-2. **Link against the Linux runtime for execution.** Because `libswiftCore.so`
-   exports the same mangled names, `darwinld` can `dlopen` it and satisfy a
-   Darwin guest's Swift imports by name. This is untested here only because the
-   runtime implementation is not in the XIP — the piece is a download, not a
-   reverse-engineering problem.
+2. **Host-runtime loading is implemented, but Swift-runtime compatibility is not verified.** `DS_HOST_LIBS` loads explicit host ELF libraries with global visibility. A test ELF function resolved a Darwin import and returned the expected exit code. That proves the loading and `dlsym` path only; it does **not** prove that Swift layouts, calling conventions, runtime semantics, or platform-dependent symbols match. A pure Swift guest test is still required.
 3. **Drop the ObjC tail.** A guest that imports `objc_msgSend` or
    `__CFConstantString` still needs those runtimes. Pure Swift does not.
+
+### Stub-backed binding measurement (2026-11-11)
+
+A generated Mach-O stub set was built from the extracted macOS Swift `.tbd`
+files. The generator exports the declarations as absolute symbols: this permits
+name resolution, not function execution. Adding the generated Swift stubs and a
+Foundation stub changed the unresolved count for
+`appshortcutstringsprocessor` from **211 to 58** (`darwinld check`). The 58
+remaining imports include symbols from private Xcode Swift modules and
+Objective-C/Foundation dependencies not represented by the generated set.
+No claim is made that these 58 are all absent from the archive, or that the
+binary can execute. The test records only binding-count movement; actual Swift
+execution against a Linux runtime remains unverified.
 
 ## What would have to be built for full support
 

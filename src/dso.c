@@ -5,6 +5,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <dlfcn.h>
 #include <unistd.h>
 #include "macho.h"
 #include "plat.h"
@@ -197,16 +198,32 @@ static void *resolve_sym(const char *name, int lib, void *ctx)
         void *a = lookup_in(self, name);
         if (a) return a;
     }
-    /* flat namespace (-2 / -1) and the last-chance path */
+    /* Flat namespace imports and unresolved two-level imports may be supplied
+     * by another mapped guest image, then by explicitly loaded host runtimes. */
     for (int i = 0; i < g_ndso; i++) {
         void *a = lookup_in(&g_dsos[i], name);
         if (a) return a;
     }
+    void *a = dlsym(RTLD_DEFAULT, name[0] == '_' ? name + 1 : name);
+    if (a) return a;
     return dshim_lookup(name);
 }
 
 struct dso *dso_load_main(const char *path)
 {
+    /* Load optional host runtimes before mapping/binding guest images. */
+    const char *hostlibs = getenv("DS_HOST_LIBS");
+    if (hostlibs && *hostlibs) {
+        char *copy = strdup(hostlibs);
+        if (copy) {
+            for (char *save = NULL, *p = strtok_r(copy, ":", &save); p;
+                 p = strtok_r(NULL, ":", &save)) {
+                if (!dlopen(p, RTLD_NOW | RTLD_GLOBAL) && getenv("DS_TRACE"))
+                    fprintf(stderr, "[dso] host runtime %s: %s\n", p, dlerror());
+            }
+            free(copy);
+        }
+    }
     struct dso *d = load(path, 0);
     if (d) d->is_main = 1;
     return d;
