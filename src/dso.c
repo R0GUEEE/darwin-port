@@ -167,9 +167,13 @@ static void *lookup_in(struct dso *d, const char *name)
             uint8_t type = e[4];
             uint64_t value = 0; memcpy(&value, e + 8, 8);
             if (!(type & 0x01)) continue;               /* N_EXT */
-            if ((type & 0x0e) != 0x0e) continue;        /* N_SECT */
+            int kind = type & 0x0e;
+            /* N_SECT values are vmaddrs (slide applies); N_ABS values are
+             * absolute and must not be slid — generated stub libraries use
+             * them to declare exports without a trie. */
+            if (kind != 0x0e && kind != 0x02) continue;
             if (!strcmp(strs + strx, name))
-                return (void *)(uintptr_t)(value + d->im.slide);
+                return (void *)(uintptr_t)(kind == 0x02 ? value : value + d->im.slide);
         }
     }
     return NULL;

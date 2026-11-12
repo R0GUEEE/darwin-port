@@ -252,7 +252,13 @@ int ds_asprintf_c(char **out, const char *fmt, const void *cur)
 }
 
 /* vfprintf: Darwin's va_list is already a pointer to the stack arguments */
-int ds_vfprintf(FILE *fp, const char *fmt, void *ap) { return ds_fprintf_c(fp, fmt, ap); }
+int ds_vfprintf(FILE *fp, const char *fmt, void *ap)
+{
+    if (getenv("DS_TRACE_FMT"))
+        fprintf(stderr, "[fmt] vfprintf(fp=%p fmt=\"%s\" ap=%p)\n", (void *)fp,
+                fmt ? fmt : "(null)", ap);
+    return ds_fprintf_c(fp, fmt, ap);
+}
 int ds_vsprintf(char *dst, const char *fmt, void *ap) { return ds_sprintf_c(dst, fmt, ap); }
 int ds_vsnprintf(char *dst, size_t n, const char *fmt, void *ap) { return ds_snprintf_c(dst, n, fmt, ap); }
 int ds_vasprintf(char **out, const char *fmt, void *ap) { return ds_asprintf_c(out, fmt, ap); }
