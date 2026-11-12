@@ -1,0 +1,14 @@
+{
+  "name": "WinShimApp",
+  "bundle_id": "com.example.winshimapp",
+  "version": "1.0",
+  "build": "1",
+  "min_ios": "15.0",
+  "sources": ["WinShimApp.m"],
+  "frameworks": ["UIKit", "Foundation", "CoreGraphics", "QuartzCore"],
+  "libraries": ["objc", "System"],
+  "info": {
+    "UILaunchScreen": {},
+    "UIRequiredDeviceCapabilities": ["arm64"]
+  }
+}

@@ -17,6 +17,7 @@ utilities and OpenSSL without attempting an incompatible loader build.
 | Goal | Setup |
 |---|---|
 | Inspect archives on x64 Linux/WSL | `tools` |
+| Build unsigned iOS IPAs on x64/ARM64 Linux or WSL | `ipa` |
 | Build/run the Mach-O loader and use Python archive utilities | `core` |
 | Run the full fixture suite and use `xclang` | `full` (recommended) |
 | Cross-compile against an existing macOS SDK | `full` + SDK path |

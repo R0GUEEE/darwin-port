@@ -59,6 +59,10 @@ requirements are a workload-specific optional step, not prerequisites for
 building/testing the loader. See [Quickstart](QUICKSTART.md) and
 [Reproducing](REPRODUCING.md) for the full extraction workflow and limitations.
 
+## IPA cross-build profile (Linux/WSL, x64 or ARM64)
+
+`./setup.sh install --profile ipa --yes` installs Python 3, Clang, and LLD (including `ld64.lld`) without trying to build `darwinld`, whose runtime backend is ARM64 Linux-specific. An iPhoneOS SDK is supplied separately; the project does not fetch or redistribute it. This profile supports C/Objective-C cross-compilation and unsigned IPA packaging. It does not provide Win32 API emulation, Swift, Apple signing/provisioning, or a native Windows compiler.
+
 ## Dependency decisions
 
 * Retain `make` and the platform C toolchain: the loader is C plus one small

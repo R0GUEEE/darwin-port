@@ -16,13 +16,13 @@ ROOT = Path(__file__).resolve().parent.parent
 KEYS = {'DARWIN_SDK', 'DARWIN_TARGET', 'DARWIN_MINOS', 'HOST_CLANG',
         'DS_SYSROOT', 'DS_LIB_PATH', 'DEVELOPER_DIR', 'APPLE_BIN'}
 PACKAGES = {
-    'apt-get': {'tools': ['python3', 'openssl'], 'core': ['python3', 'build-essential'],
+    'apt-get': {'tools': ['python3', 'openssl'], 'ipa': ['python3', 'clang', 'lld'], 'core': ['python3', 'build-essential'],
                 'full': ['python3', 'build-essential', 'clang', 'llvm', 'lld', 'openssl']},
-    'apk': {'tools': ['python3', 'openssl'], 'core': ['python3', 'build-base'],
+    'apk': {'tools': ['python3', 'openssl'], 'ipa': ['python3', 'clang', 'lld'], 'core': ['python3', 'build-base'],
             'full': ['python3', 'build-base', 'clang', 'llvm', 'lld', 'openssl']},
-    'dnf': {'tools': ['python3', 'openssl'], 'core': ['python3', 'gcc', 'make', 'glibc-devel'],
+    'dnf': {'tools': ['python3', 'openssl'], 'ipa': ['python3', 'clang', 'lld'], 'core': ['python3', 'gcc', 'make', 'glibc-devel'],
             'full': ['python3', 'gcc', 'make', 'glibc-devel', 'clang', 'llvm', 'lld', 'openssl']},
-    'pacman': {'tools': ['python', 'openssl'], 'core': ['python', 'base-devel'],
+    'pacman': {'tools': ['python', 'openssl'], 'ipa': ['python', 'clang', 'lld'], 'core': ['python', 'base-devel'],
                'full': ['python', 'base-devel', 'clang', 'llvm', 'lld', 'openssl']},
 }
 SDK_DIRS = ['usr/include', 'usr/lib', 'System/Library/Frameworks']
@@ -140,7 +140,9 @@ def settings(args):
 
 def diagnostics(profile, values):
     names = ['python3', 'openssl'] if profile == 'tools' else ['python3']
-    if profile != 'tools':
+    if profile == 'ipa':
+        names += ['clang', 'ld64.lld']
+    elif profile != 'tools':
         names += ['make', 'cc']
     if profile in ('full', 'sdk'):
         names += [values['HOST_CLANG'], 'llvm-mc', 'ld64.lld', 'openssl']
@@ -170,7 +172,7 @@ def parser():
     p = argparse.ArgumentParser(description=__doc__)
     p.add_argument('action', nargs='?', default='wizard',
                    choices=['wizard', 'plan', 'install', 'configure', 'doctor', 'env', 'run'])
-    p.add_argument('--profile', choices=['auto', 'tools', 'core', 'full', 'sdk'], default='auto')
+    p.add_argument('--profile', choices=['auto', 'tools', 'ipa', 'core', 'full', 'sdk'], default='auto')
     p.add_argument('--config', type=lambda s: Path(s).expanduser().resolve(),
                    default=Path(os.environ.get('DARWIN_PORT_CONFIG', str(ROOT / 'darwin-port.env'))).expanduser().resolve())
     sdk = p.add_mutually_exclusive_group()
@@ -202,9 +204,9 @@ def main(argv=None):
         if not sys.stdin.isatty():
             raise ValueError('Wizard requires a terminal. Use plan or install --yes for automation.')
         print('darwin-port setup — Apple SDKs are supplied separately.')
-        print('Profiles: auto, tools (archive utilities), core (ARM64 loader), full, sdk')
+        print('Profiles: auto, tools (archive utilities), ipa (iOS cross-build), core (ARM64 loader), full, sdk')
         args.profile = input(f'Profile [{args.profile}]: ').strip() or args.profile
-        if args.profile not in ('auto', 'tools', 'core', 'full', 'sdk'):
+        if args.profile not in ('auto', 'tools', 'ipa', 'core', 'full', 'sdk'):
             raise ValueError('unknown profile')
         if not args.no_sdk and not args.sdk:
             args.sdk = input('Existing MacOSX.sdk path [optional]: ').strip() or None
@@ -233,8 +235,9 @@ def main(argv=None):
     report = diagnostics(profile, values)
     pkg = report['package_manager']
     commands = [] if args.no_packages or not pkg else package_commands(pkg, profile, args.yes)
+    build_enabled = profile in ('core', 'full', 'sdk')
     report.update(config=str(args.config), packages=commands,
-                  build=profile != 'tools', tests=profile in ('full', 'sdk') and not args.no_tests)
+                  build=build_enabled, tests=profile in ('full', 'sdk') and not args.no_tests)
     if args.json:
         print(json.dumps(report, indent=2))
     else:
@@ -273,7 +276,7 @@ def main(argv=None):
     if not diagnostics(profile, values)['ready']:
         raise ValueError('Required tools are still missing. Run doctor and fix PATH before retrying.')
     write_config(args.config, values)
-    if profile != 'tools':
+    if profile in ('core', 'full', 'sdk'):
         log_path = args.log or ROOT / 'build' / 'setup.log'
         log_path.parent.mkdir(parents=True, exist_ok=True)
         with log_path.open('a') as log:

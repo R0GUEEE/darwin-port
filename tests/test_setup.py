@@ -33,6 +33,10 @@ class SetupTests(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, 'ARM64 Linux'):
                 setup.resolve_profile('full')
 
+    def test_ipa_profile_available_on_x64(self):
+        with patch.object(setup.platform, 'machine', return_value='x86_64'), patch.object(setup.platform, 'system', return_value='Linux'):
+            self.assertEqual(setup.resolve_profile('ipa'), 'ipa')
+
     def test_auto_profile_on_arm_linux(self):
         with patch.object(setup.platform, 'machine', return_value='aarch64'), patch.object(setup.platform, 'system', return_value='Linux'):
             self.assertEqual(setup.resolve_profile('auto'), 'full')
@@ -113,6 +117,16 @@ class SetupTests(unittest.TestCase):
         run.assert_not_called()
         self.assertTrue(self.config.exists())
 
+    def test_ipa_profile_installs_cross_compiler_without_native_build(self):
+        with patch.object(setup, 'manager', return_value='apt-get'), patch.object(setup.shutil, 'which', return_value='/bin/tool'), patch.object(setup, 'execute') as run:
+            code, out = self.invoke('plan', '--profile', 'ipa', '--json')
+        report = json.loads(out)
+        self.assertEqual(code, 0)
+        self.assertFalse(report['build'])
+        packages = report['packages'][-1]
+        self.assertIn('clang', packages)
+        self.assertIn('lld', packages)
+
     def test_config_propagates_to_build_and_tests(self):
         with patch.object(setup.platform, 'system', return_value='Linux'), patch.object(setup.platform, 'machine', return_value='aarch64'), patch.object(setup.shutil, 'which', return_value='/bin/tool'), patch.object(setup, 'execute') as run:
             self.invoke('install', '--profile', 'full', '--no-packages', '--set', 'DS_SYSROOT=/guest', '--log', str(self.path / 'log'))
@@ -122,7 +136,7 @@ class SetupTests(unittest.TestCase):
 
     def test_each_package_manager_has_core_and_full_packages(self):
         for manager in setup.PACKAGES:
-            for profile in ['tools', 'core', 'full', 'sdk']:
+            for profile in ['tools', 'ipa', 'core', 'full', 'sdk']:
                 self.assertTrue(setup.package_commands(manager, profile, True))
                 self.assertTrue(setup.package_commands(manager, profile, False))
 

@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """iosbuild - build a real, unsigned iOS app from Linux, without Xcode.
 
-Compiles C/Objective-C sources with clang for `arm64-apple-ios`, links them with
+Compiles C, Objective-C, C++, and Objective-C++ source with clang for `arm64-apple-ios`, links them with
 ld64.lld against an extracted iPhoneOS SDK's text stubs, writes the bundle
 Info.plist, and packages `Payload/<Name>.app` as an IPA.
 
@@ -68,10 +68,15 @@ def die(msg, code=1):
 
 # ------------------------------------------------------------------ tooling --
 def which(name):
+    """Find a host executable on PATH; also accept Windows .exe names."""
+    names = [name]
+    if os.name == "nt" and not name.lower().endswith((".exe", ".cmd", ".bat")):
+        names = [name + ".exe", name + ".cmd", name + ".bat", name]
     for d in os.environ.get("PATH", "").split(os.pathsep):
-        p = os.path.join(d, name)
-        if os.path.isfile(p) and os.access(p, os.X_OK):
-            return p
+        for candidate in names:
+            p = os.path.join(d, candidate)
+            if os.path.isfile(p) and (os.name == "nt" or os.access(p, os.X_OK)):
+                return p
     return None
 
 
@@ -168,14 +173,15 @@ def _ver(v):
 # ---------------------------------------------------------------------- sdk --
 SDK_CANDIDATES = [
     os.path.expanduser("~/iphoneos-compat-sdk"),
+    os.path.expanduser("~/iphoneos27.3-compat-sdk-with-headers"),
     "/root/iphoneos-compat-sdk",
+    "/root/iphoneos27.3-compat-sdk-with-headers",
 ]
 
 
 def find_sdk(explicit=None):
-    """Locate an iPhoneOS SDK. Order: --sdk, $IPHONEOS_SDK, the compat overlay
-    sitting next to this repo's data, then any iPhoneOS SDK inside an extracted
-    Xcode tree under /root/xc or ~/xc."""
+    """Locate an iPhoneOS SDK. Order: --sdk, $IPHONEOS_SDK, known local
+    compatibility SDK paths, then an extracted Xcode tree under /root/xc or ~/xc."""
     if explicit:
         p = os.path.abspath(explicit)
         if not os.path.isdir(p):
@@ -188,9 +194,10 @@ def find_sdk(explicit=None):
         if os.path.isdir(p) and os.path.exists(os.path.join(p, "SDKSettings.json")):
             return p
     import glob
-    pats = ["/root/iphoneos*compat*", os.path.expanduser("~/iphoneos*compat*"),
-            "/root/xc/*.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/*.sdk",
-            os.path.expanduser("~/xc/*.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/*.sdk")]
+    pats = [os.path.expanduser("~/iphoneos*compat*"),
+            "/root/iphoneos*compat*",
+            os.path.expanduser("~/xc/*.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/*.sdk"),
+            "/root/xc/*.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/*.sdk"]
     found = []
     for pat in pats:
         found.extend(sorted(glob.glob(pat)))
@@ -340,7 +347,8 @@ def load_manifest(path):
 
 def _manifest_from_dir(d):
     """No ipa.json: build everything obvious in the directory."""
-    srcs = sorted(f for f in os.listdir(d) if f.endswith((".m", ".c", ".mm")))
+    srcs = sorted(f for f in os.listdir(d)
+                  if f.endswith((".m", ".c", ".mm", ".cc", ".cpp", ".cxx")))
     if not srcs:
         die("no ipa.json and no .m/.c/.mm sources in %s" % d, 2)
     m = dict(DEFAULT_MANIFEST)
@@ -393,12 +401,16 @@ def sdk_framework_paths(sdk):
 
 
 # -------------------------------------------------------------------- build --
-def clang_flags(sdk, m):
+def clang_flags(sdk, m, source=None):
     flags = ["-target", "arm64-apple-ios" + m["min_ios"],
              "-isysroot", sdk,
-             "-O2", "-fPIC", "-fobjc-arc", "-fblocks",
-             "-Wno-nullability-completeness",
+             "-O2", "-fPIC", "-Wno-nullability-completeness",
              "-DIPHONEOS=1"]
+    ext = os.path.splitext(source or "")[1].lower()
+    if ext in (".m", ".mm"):
+        flags += ["-fobjc-arc", "-fblocks"]
+    if ext in (".mm", ".cc", ".cpp", ".cxx"):
+        flags += ["-stdlib=libc++"]
     for fpath in sdk_framework_paths(sdk):
         if fpath.endswith("Framework") or fpath.endswith("Frameworks"):
             flags += ["-F", fpath]
@@ -421,11 +433,10 @@ def build(m, sdk, outdir, verbose=False):
     overlay = overlay_sdk(sdk, verbose)
     os.makedirs(outdir, exist_ok=True)
     objs = []
-    cflags = clang_flags(sdk, m)
     for src in m["sources"]:
         obj = os.path.join(outdir, os.path.basename(src) + ".o")
         log("  CC  %s" % os.path.relpath(src, m["_dir"]))
-        run(["clang"] + cflags + ["-c", src, "-o", obj], verbose)
+        run(["clang"] + clang_flags(sdk, m, src) + ["-c", src, "-o", obj], verbose)
         objs.append(obj)
 
     exe = os.path.join(outdir, m["name"])

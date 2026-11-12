@@ -1,0 +1,10 @@
+{
+  "name": "CppProbe",
+  "bundle_id": "com.example.cppprobe",
+  "version": "1.0",
+  "build": "1",
+  "min_ios": "15.0",
+  "sources": ["main.cpp"],
+  "frameworks": [],
+  "libraries": ["System"]
+}

@@ -76,6 +76,21 @@ python3 pxcodebuild.py build path/to/App.xcodeproj \
 
 Project-builder limitations (Swift, asset catalogs, storyboards, signing, target dependencies, and `.xcconfig`) are documented in [CLI](docs/CLI.md) and [Xcode on Linux](docs/XCODE-ON-LINUX.md).
 
+### Build an iOS IPA from Windows-authored source
+
+```powershell
+.\iosbuild.ps1 ipa examples/windows-native --out build-out
+```
+
+The Windows launcher invokes the Linux builder in WSL2. Install the IPA-only
+toolchain profile with `./setup.sh install --profile ipa --yes` (it installs
+Python, Clang, and LLD without attempting to build the ARM64-hosted loader),
+then configure a local iPhoneOS SDK. Pass an SDK path in WSL form, such as
+`--sdk /mnt/c/ios-sdk/iPhoneOS.sdk`; relative source/output paths resolve from
+the repository root. Source must be portable to iOS (C/Objective-C and iOS
+frameworks), not Win32 desktop UI/API code. Output is unsigned and not
+App Store-ready. See [IPA](docs/IPA.md) for exact boundaries.
+
 ### Verify and extract an Xcode archive
 
 These steps require a separately obtained Xcode `.xip` and substantial free disk space. Verify it first:

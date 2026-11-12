@@ -27,6 +27,7 @@ Native Windows and macOS loader builds are not implemented by this utility.
 |---|---|
 | `auto` (default) | `full` on ARM64 Linux; `tools` on other hosts |
 | `tools` | Python and OpenSSL; archive/inspection utilities; no loader build/tests |
+| `ipa` | Python, Clang, LLD; unsigned iOS IPA cross-build tools; no ARM64 loader build |
 | `core` | Python, make, C compiler and libc headers; build ARM64 Linux loader |
 | `full` | Core plus clang, llvm-mc, ld64.lld and OpenSSL; build and test |
 | `sdk` | Full profile plus a required, valid local macOS SDK |
@@ -37,7 +38,7 @@ installer verifies executables after installation and fails if tools are missing
 Only package names/command construction for Fedora and Arch have automated test
 coverage; real package installation on every distribution is not validated.
 Other hosts can use portable Python utilities with preinstalled dependencies and
-`--profile tools --no-packages`. Core/full/sdk reject unsupported hosts before
+`--profile tools --no-packages`. The `ipa` profile is available on x64 Linux/WSL; it checks only Python, Clang, and LLD and never builds the ARM64 loader. Core/full/sdk reject unsupported hosts before
 installing anything. Apple SDKs and archives are never downloaded.
 
 ## Commands

@@ -1,12 +1,15 @@
-# IPA — building an unsigned iOS app on Linux
+# IPA — building an unsigned iOS app from Windows sources
 
-`iosbuild.py` turns Objective-C sources into `Payload/Foo.app/Foo`: a real
-thin arm64 Mach-O, `platform IOS`, linked against the iPhoneOS SDK's text
-stubs, wrapped in a bundle with a valid `Info.plist`, zipped as an `.ipa`.
+`iosbuild.py` currently runs on **Linux** and produces an unsigned iOS `.ipa` from C, C++, Objective-C, and Objective-C++ sources using upstream Clang + LLD and a locally supplied iPhoneOS SDK. A Windows operator can use the documented WSL2 path, but this is not a native Windows build. `examples/windows-native/` is a portable Objective-C UIKit sample suitable for Windows-authored source workflows; it is not a converter for arbitrary Win32 desktop applications.
 
-It is the first thing in this project that produces an artifact for the *other*
-end of the pipeline: everything else here runs Apple's toolchain off Apple;
-this one emits something an iPhone would load.
+From Windows, use `iosbuild.ps1` to invoke the builder in WSL2. On x64 WSL, the IPA-only dependencies can be installed without attempting the ARM64 loader build:
+
+```sh
+./setup.sh install --profile ipa --yes
+```
+
+Supply a locally obtained iPhoneOS SDK with `--sdk` (use its WSL path, e.g. `/mnt/c/ios-sdk/iPhoneOS.sdk`). The build input must already be iOS-compatible source. The tool does not translate Win32 GUI, Windows system calls, MSVC project files, or Windows-only dependencies into iOS equivalents.
+
 
 ```sh
 python3 iosbuild.py plan    examples/winprobe
@@ -49,6 +52,10 @@ result is a 6 KB IPA containing a 69 KB executable that imports only
 7. **Package.** `Info.plist` (XML plist, no `plutil` needed), resources copied,
    `Payload/<Name>.app` zipped with unix modes preserved.
 
+The IPA output is unsigned. Device installation still needs an approved signing/provisioning workflow. Windows-authored Win32 desktop source is not transformed into iOS code: port it to supported C/Objective-C and iOS frameworks first.
+
+`examples/windows-native/` is the cross-build proof: a portable Objective-C UIKit sample, built from Windows PowerShell through WSL2 using `iosbuild.ps1` after configuring an iPhoneOS SDK.
+
 ## What it deliberately does not do
 
 | missing | why, and what it would take |
@@ -60,21 +67,22 @@ result is a 6 KB IPA containing a 69 KB executable that imports only
 | **device install** | an unsigned, unprovisioned IPA installs only through a signing service or a jailbroken device. |
 | **App Store submission** | requires Apple's signing and notarization chain by definition. |
 
-## The example
+## Examples
 
-`examples/winprobe/` is the smallest honest proof: a `UIApplicationMain`, an
-`AppDelegate`, a `UIWindow`, a root view controller built in code, and one
-`UILabel`. No nibs, no assets, no third-party code. Its `ipa.json` is the
-manifest reference — name, bundle id, version, minimum iOS, sources,
-frameworks, libraries.
+- `examples/winprobe/` is the UIKit window/label probe used for the measured
+  full app build.
+- `examples/windows-native/` is the Windows-hosted source workflow example:
+  portable Objective-C UIKit code; the resulting app is unsigned.
+- `examples/cpp-ipa-probe/` proves a minimal C++ source can emit an iOS IPA.
+  It does not validate STL-heavy or Objective-C++ apps on this constrained host.
 
 ## Tests
 
 ```
-python3 tests/iosbuild/test_iosbuild.py -v      # 20 tests
+python3 tests/iosbuild/test_iosbuild.py -v      # 22 tests
 ```
 
-Fixture tests synthesise Mach-O load commands, TBD text, bundles and IPAs, so
+Fixture tests synthesize Mach-O load commands, TBD text, bundles and IPAs, so
 the parsers that decide what ships are covered without an SDK. The integration
 test builds `examples/winprobe` end to end and skips cleanly when no SDK is
 present. `tests/run.sh` runs them as T12.

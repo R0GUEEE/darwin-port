@@ -18,6 +18,9 @@ Two trees exist and they are not duplicates:
 **I want to know what happens to Swift**
 → [SWIFT](SWIFT.md) → `specs/swift-runtime.md`
 
+**I want to build an iOS IPA from Windows-authored C/Objective-C source**
+→ [IPA](IPA.md) → `examples/windows-native/` → `iosbuild.ps1`
+
 **I want to build an Xcode project on Linux**
 → [XCODE-ON-LINUX](XCODE-ON-LINUX.md) → [CLI §pxcodebuild](CLI.md#pxcodebuildpy--build-an-xcodeproj)
 

@@ -142,6 +142,21 @@ class ManifestTests(unittest.TestCase):
             m = iosbuild.load_manifest(tmp)
         self.assertEqual(len(m["sources"]), 1)
 
+    def test_source_language_flags(self):
+        manifest = dict(iosbuild.DEFAULT_MANIFEST, min_ios="15.0", _dir=".")
+        c_flags = iosbuild.clang_flags("sdk", manifest, "main.c")
+        objc_flags = iosbuild.clang_flags("sdk", manifest, "main.m")
+        cpp_flags = iosbuild.clang_flags("sdk", manifest, "main.cpp")
+        self.assertNotIn("-fobjc-arc", c_flags)
+        self.assertIn("-fobjc-arc", objc_flags)
+        self.assertIn("-stdlib=libc++", cpp_flags)
+
+    def test_directory_without_manifest_includes_cpp_sources(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            write(tmp, "main.cpp", b"int main(){return 0;}")
+            m = iosbuild.load_manifest(tmp)
+        self.assertEqual([os.path.basename(s) for s in m["sources"]], ["main.cpp"])
+
     def test_swift_sources_rejected_with_reason(self):
         with tempfile.TemporaryDirectory() as tmp:
             write(tmp, "main.swift", b"print(1)")
