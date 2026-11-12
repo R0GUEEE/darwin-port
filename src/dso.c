@@ -204,8 +204,6 @@ static void *resolve_sym(const char *name, int lib, void *ctx)
         void *a = lookup_in(&g_dsos[i], name);
         if (a) return a;
     }
-    void *a = dlsym(RTLD_DEFAULT, name[0] == '_' ? name + 1 : name);
-    if (a) return a;
     return dshim_lookup(name);
 }
 
