@@ -21,8 +21,13 @@ The DMG fails four independent ways: koly data-fork CRC32 `0xd5ca3f29` vs stored
 exactly how a damaged archive passes a casual look. It was abandoned; the XIP
 carries the same toolchain and every SDK.
 
-## Phase A — containers
+## Current attachment recheck (2026-11-12)
 
+The XIP reattached in this session hashes to the same SHA-256 recorded above:
+`7263cc664d441b1b181fbc58719339a064873ffa5e89a86e6f83a88ea015cb58`.
+`verify_xip.py` revalidated the TOC checksum, RSA signature, certificate chain, and Content SHA-1. XAR metadata parsing also succeeded. A fresh full extraction was attempted, but did not complete within this iSH session; this recheck adds no new extraction or inventory claim. Historical full inventory and selected-tool execution measurements remain in the reports and `xcode-re/` audit trail.
+
+## Phase A — containers
 The chain is `xar → pbzx → cpio-odc` for the XIP and
 `koly → blkx → HFS+ → xar(pkg) → pbzx → cpio-odc` for the DMG. Both were
 implemented from the bytes, not from `xar(1)` or `7z`, because neither handles
