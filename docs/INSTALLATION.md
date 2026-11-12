@@ -104,16 +104,18 @@ A successful test run ends with `passed 13, failed 0` (the exact count may chang
 
 Install the equivalent packages using your distribution's package manager:
 
-| Requirement | Alpine | Debian/Ubuntu |
-|---|---|---|
-| Core build tools | `build-base` | `build-essential` |
-| Python | `python3` | `python3` |
-| Clang | `clang` | `clang` |
-| LLVM assembler (`llvm-mc`) | `llvm` | `llvm` |
-| Mach-O linker (`ld64.lld`) | `lld` | `lld` |
-| XIP signature verification | `openssl` | `openssl` |
+| Requirement | Alpine | Debian/Ubuntu | Fedora | Arch |
+|---|---|---|---|---|
+| Core build tools | `build-base` | `build-essential` | `gcc make glibc-devel` | `base-devel` |
+| Python 3.8+ | `python3` | `python3` | `python3` | `python` |
+| Clang | `clang` | `clang` | `clang` | `clang` |
+| LLVM assembler (`llvm-mc`) | `llvm` | `llvm` | `llvm` | `llvm` |
+| Mach-O linker (`ld64.lld`) | `lld` | `lld` | `lld` | `lld` |
+| XIP signature verification | `openssl` | `openssl` | `openssl` | `openssl` |
 
-For other distributions, package names may differ. Ensure all required executables are on `PATH`, then run:
+The package names are mapped in [`dependencies.json`](../dependencies.json); a distro version may split or version-suffix LLVM executables. The installer’s `doctor` command verifies the actual required executable names after installation. For the IPA profile, Python, Clang, and `ld64.lld` are needed; it does not require the native loader build. All Python dependencies are standard library only.
+
+Ensure all required executables are on `PATH`, then run:
 
 ```sh
 ./scripts/doctor.sh
