@@ -15,16 +15,8 @@ import tempfile
 ROOT = Path(__file__).resolve().parent.parent
 KEYS = {'DARWIN_SDK', 'DARWIN_TARGET', 'DARWIN_MINOS', 'HOST_CLANG',
         'DS_SYSROOT', 'DS_LIB_PATH', 'DEVELOPER_DIR', 'APPLE_BIN'}
-PACKAGES = {
-    'apt-get': {'tools': ['python3', 'openssl'], 'ipa': ['python3', 'clang', 'lld'], 'core': ['python3', 'build-essential'],
-                'full': ['python3', 'build-essential', 'clang', 'llvm', 'lld', 'openssl']},
-    'apk': {'tools': ['python3', 'openssl'], 'ipa': ['python3', 'clang', 'lld'], 'core': ['python3', 'build-base'],
-            'full': ['python3', 'build-base', 'clang', 'llvm', 'lld', 'openssl']},
-    'dnf': {'tools': ['python3', 'openssl'], 'ipa': ['python3', 'clang', 'lld'], 'core': ['python3', 'gcc', 'make', 'glibc-devel'],
-            'full': ['python3', 'gcc', 'make', 'glibc-devel', 'clang', 'llvm', 'lld', 'openssl']},
-    'pacman': {'tools': ['python', 'openssl'], 'ipa': ['python', 'clang', 'lld'], 'core': ['python', 'base-devel'],
-               'full': ['python', 'base-devel', 'clang', 'llvm', 'lld', 'openssl']},
-}
+DEPENDENCIES = json.loads((ROOT / 'dependencies.json').read_text())
+PACKAGES = DEPENDENCIES['package_managers']
 SDK_DIRS = ['usr/include', 'usr/lib', 'System/Library/Frameworks']
 
 
@@ -138,14 +130,16 @@ def settings(args):
     return values
 
 
+def profile_spec(profile):
+    spec = DEPENDENCIES['profiles'][profile]
+    return DEPENDENCIES['profiles'][spec['inherits']] if 'inherits' in spec else spec
+
+
 def diagnostics(profile, values):
-    names = ['python3', 'openssl'] if profile == 'tools' else ['python3']
-    if profile == 'ipa':
-        names += ['clang', 'ld64.lld']
-    elif profile != 'tools':
-        names += ['make', 'cc']
-    if profile in ('full', 'sdk'):
-        names += [values['HOST_CLANG'], 'llvm-mc', 'ld64.lld', 'openssl']
+    spec = profile_spec(profile)
+    names = list(spec['required_executables'])
+    if profile in ('full', 'sdk') and 'clang' in names:
+        names[names.index('clang')] = values['HOST_CLANG']
     checks = [{'tool': name, 'path': shutil.which(name)} for name in dict.fromkeys(names)]
     return {'host': platform.system(), 'architecture': platform.machine(), 'profile': profile,
             'package_manager': manager(), 'checks': checks, 'sdk': values.get('DARWIN_SDK'),
@@ -190,6 +184,8 @@ def parser():
 
 
 def main(argv=None):
+    if sys.version_info < tuple(int(part) for part in DEPENDENCIES['python']['minimum'].split('.')):
+        raise ValueError(f"Python {DEPENDENCIES['python']['minimum']}+ is required")
     argv = list(sys.argv[1:] if argv is None else argv)
     command = []
     if '--' in argv:
@@ -235,9 +231,11 @@ def main(argv=None):
     report = diagnostics(profile, values)
     pkg = report['package_manager']
     commands = [] if args.no_packages or not pkg else package_commands(pkg, profile, args.yes)
-    build_enabled = profile in ('core', 'full', 'sdk')
+    spec = profile_spec(profile)
+    build_enabled = spec['build_loader']
+    run_tests = spec['run_full_tests'] and not args.no_tests
     report.update(config=str(args.config), packages=commands,
-                  build=build_enabled, tests=profile in ('full', 'sdk') and not args.no_tests)
+                  build=build_enabled, tests=run_tests)
     if args.json:
         print(json.dumps(report, indent=2))
     else:
@@ -276,7 +274,7 @@ def main(argv=None):
     if not diagnostics(profile, values)['ready']:
         raise ValueError('Required tools are still missing. Run doctor and fix PATH before retrying.')
     write_config(args.config, values)
-    if profile in ('core', 'full', 'sdk'):
+    if build_enabled:
         log_path = args.log or ROOT / 'build' / 'setup.log'
         log_path.parent.mkdir(parents=True, exist_ok=True)
         with log_path.open('a') as log:

@@ -134,6 +134,21 @@ class SetupTests(unittest.TestCase):
         self.assertEqual(run.call_args_list[1].args[0], ['make', 'test'])
         self.assertEqual(run.call_args_list[1].args[1]['DS_SYSROOT'], '/guest')
 
+    def test_dependency_manifest_drives_profile_checks(self):
+        self.assertEqual(setup.DEPENDENCIES['python']['third_party_packages'], [])
+        with patch.object(setup.shutil, 'which', side_effect=lambda name: '/bin/' + name):
+            for profile in ('tools', 'ipa', 'core', 'full', 'sdk'):
+                report = setup.diagnostics(profile, {'HOST_CLANG': 'clang-19'})
+                expected = setup.profile_spec(profile)['required_executables']
+                if profile in ('full', 'sdk'):
+                    expected = ['clang-19' if name == 'clang' else name for name in expected]
+                self.assertEqual([item['tool'] for item in report['checks']], expected)
+
+    def test_python_minimum_is_enforced(self):
+        with patch.object(setup.sys, 'version_info', (3, 7, 9)):
+            with self.assertRaisesRegex(ValueError, 'Python 3.8\\+ is required'):
+                setup.main(['plan', '--profile', 'tools', '--config', str(self.config)])
+
     def test_each_package_manager_has_core_and_full_packages(self):
         for manager in setup.PACKAGES:
             for profile in ['tools', 'ipa', 'core', 'full', 'sdk']:

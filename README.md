@@ -2,7 +2,7 @@
 
 Extract Apple Xcode archives, inspect their contents, and run a useful subset of the Darwin toolchain on Linux. The project contains a Mach-O loader with a libSystem ABI shim, archive inspection tools, and a cross-compiler that emits real Mach-O binaries against a local macOS SDK.
 
-No macOS host is required. Apple SDKs and Xcode archives are not included or downloaded by this project.
+No third-party Python packages are required. The checked-in [`dependencies.json`](dependencies.json) is the machine-readable dependency manifest used by the installer for package selection, `doctor` checks, and profile build/test behavior; see [dependency documentation](docs/DEPENDENCIES.md) for OS package equivalents and optional inputs. Apple SDKs and Xcode archives are not included or downloaded by this project.
 
 ## Guided installation and configuration
 

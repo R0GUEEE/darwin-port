@@ -1,24 +1,36 @@
 # Dependencies and setup
 
+The project has no third-party Python modules. Its archive, installer, IPA, and inventory
+commands use Python’s standard library; no virtualenv, `pip`, `requirements.txt`, or
+`pyproject.toml` dependency install is required.
+
 ## Supported host tools
 
-The project has no third-party Python modules: its command-line utilities use
-only the Python 3 standard library (`zlib`, `gzip`, `bz2`, `lzma`, `plistlib`,
-XML, JSON, hashing and filesystem modules). Do not create a virtualenv or run
-`pip install -r requirements.txt`; there is no Python package dependency set.
+The machine-readable source of truth is [`../dependencies.json`](../dependencies.json):
+profile executables, OS package names, Python minimum, optional tools, and external
+inputs. `scripts/setup.py` loads its package mappings and uses the profile requirements
+for `doctor` checks and build/test selection. Changes to dependencies should update that
+manifest and its installer tests together.
 
-| Tool | Required for | Alpine | Debian/Ubuntu |
-|---|---|---|---|
-| POSIX shell, `make`, C compiler | build and test loader | `build-base` | `build-essential` |
-| LLVM `clang` | compile Darwin-target fixture and `xclang` usage | `clang` | `clang` |
-| LLVM `llvm-mc` | assemble arm64 Mach-O fixture | `llvm` | `llvm` |
-| `ld64.lld` | link Mach-O test fixtures / Darwin-target output | `lld` | `lld` |
-| Python 3 | XIP/DMG/pkg tools, project builder, tests | `python3` | `python3` |
-| OpenSSL CLI | optional: verify XIP RSA signature and certificate chain | `openssl` | `openssl` |
+| Tool | Required for | Alpine | Debian/Ubuntu | Fedora | Arch |
+|---|---|---|---|---|---|
+| POSIX shell, `make`, C compiler | loader build | `build-base` | `build-essential` | `make gcc glibc-devel` | `base-devel` |
+| LLVM `clang` | Darwin-target fixture and cross-compilation | `clang` | `clang` | `clang` | `clang` |
+| LLVM `llvm-mc` | assemble arm64 Mach-O fixtures | `llvm` | `llvm` | `llvm` | `llvm` |
+| `ld64.lld` | link Mach-O fixtures / Darwin output | `lld` | `lld` | `lld` | `lld` |
+| Python 3.8+ | archive tools, installer, project builder, tests | `python3` | `python3` | `python3` | `python` |
+| OpenSSL CLI | XIP signature and certificate verification | `openssl` | `openssl` | `openssl` | `openssl` |
+| `grep`, `head`, `tr` | compatibility test harness | BusyBox applets | GNU coreutils/grep | GNU coreutils/grep | coreutils/grep |
+
+Package names can vary by distro version and executable availability. The installer’s
+`doctor` command checks the actual required executables after packages are installed;
+that check is authoritative. The full test suite also assumes a POSIX shell. The
+optional extracted-Xcode `otool` integration check uses `timeout` and is skipped when
+`APPLE_BIN` is unset.
 
 Use `./scripts/install.sh` as the primary setup path. It supports Alpine (`apk`)
-and Debian/Ubuntu (`apt-get`), with `--check-only` to avoid package changes.
-Package installation requires root or `sudo`. `./scripts/doctor.sh` checks the
+and Debian/Ubuntu (`apt-get`), Fedora (`dnf`), and Arch (`pacman`), with `--check-only`
+to avoid package changes. Package installation requires root or `sudo`. `./scripts/doctor.sh` checks the
 selected `core` or `full` profile. `bootstrap.sh --check` and `--install` remain
 available for compatibility, but the installer and doctor are the maintained
 profile-aware path. OpenSSL is included for XIP signature verification; it is

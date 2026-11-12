@@ -1,0 +1,78 @@
+{
+  "schema_version": 1,
+  "python": {
+    "minimum": "3.8",
+    "third_party_packages": [],
+    "note": "All Python commands use the standard library; no pip install or requirements file is needed."
+  },
+  "profiles": {
+    "tools": {
+      "purpose": "Python archive and metadata utilities; XIP signature verification",
+      "required_executables": ["python3", "openssl"],
+      "build_loader": false,
+      "run_full_tests": false
+    },
+    "ipa": {
+      "purpose": "C/Objective-C Darwin cross-build and unsigned IPA packaging",
+      "required_executables": ["python3", "clang", "ld64.lld"],
+      "build_loader": false,
+      "run_full_tests": false,
+      "external_input": "A separately supplied iPhoneOS SDK is required for actual builds."
+    },
+    "core": {
+      "purpose": "Build the Linux/AArch64 Mach-O loader without LLVM-dependent fixtures",
+      "required_executables": ["python3", "make", "cc"],
+      "build_loader": true,
+      "run_full_tests": false,
+      "host_requirement": "Linux/AArch64"
+    },
+    "full": {
+      "purpose": "Build the loader, Mach-O fixture toolchain, archive verification and compatibility suite",
+      "required_executables": ["python3", "make", "cc", "clang", "llvm-mc", "ld64.lld", "openssl"],
+      "build_loader": true,
+      "run_full_tests": true,
+      "host_requirement": "Linux/AArch64"
+    },
+    "sdk": {
+      "purpose": "Full profile with a separately supplied macOS SDK",
+      "inherits": "full",
+      "external_input": "A separately supplied macOS SDK is required."
+    }
+  },
+  "package_managers": {
+    "apt-get": {
+      "tools": ["python3", "openssl"],
+      "ipa": ["python3", "clang", "lld"],
+      "core": ["python3", "build-essential"],
+      "full": ["python3", "build-essential", "clang", "llvm", "lld", "openssl"]
+    },
+    "apk": {
+      "tools": ["python3", "openssl"],
+      "ipa": ["python3", "clang", "lld"],
+      "core": ["python3", "build-base"],
+      "full": ["python3", "build-base", "clang", "llvm", "lld", "openssl"]
+    },
+    "dnf": {
+      "tools": ["python3", "openssl"],
+      "ipa": ["python3", "clang", "lld"],
+      "core": ["python3", "gcc", "make", "glibc-devel"],
+      "full": ["python3", "gcc", "make", "glibc-devel", "clang", "llvm", "lld", "openssl"]
+    },
+    "pacman": {
+      "tools": ["python", "openssl"],
+      "ipa": ["python", "clang", "lld"],
+      "core": ["python", "base-devel"],
+      "full": ["python", "base-devel", "clang", "llvm", "lld", "openssl"]
+    }
+  },
+  "test_harness_commands": ["sh", "grep", "head", "tr"],
+  "optional_executables": {
+    "verify_xip.py": ["openssl"],
+    "optional_apple_tool_integration": ["timeout", "APPLE_BIN pointing to extracted Xcode tools"]
+  },
+  "not_vendored": [
+    "Apple Xcode archives and SDKs (separately obtained inputs; licensing and size make vendoring inappropriate)",
+    "Host compiler/linker packages (installed by the selected OS package manager)",
+    "Guest runtime providers such as libc++, libc++abi, and zlib (needed only by particular guest binaries)"
+  ]
+}
